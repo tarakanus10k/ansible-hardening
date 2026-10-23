@@ -89,8 +89,8 @@ ssh-keygen -t rsa -b 4096 -C "ansible-control"
 # passphrase: задать или оставить пустым
 
 # Копирование публичного ключа на ВМ
-ssh-copy-id -i ~/.ssh/rsa_ansible_key.pub srvadmin@192.168.100.9
+ssh-copy-id -i ~/.ssh/rsa_ansible_key.pub srvadmin@192.168.100.10
 
 # проверка
-ssh srvadmin@192.168.100.9
+ssh srvadmin@192.168.100.10
 ```
