@@ -1,1 +1,5 @@
 /.obsidian
+
+/roles/cis_baseline/tasks/nonexists.yml
+
+/roles/cis_baseline/tasks/rulesforimplementation
