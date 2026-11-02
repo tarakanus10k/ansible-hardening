@@ -17,30 +17,6 @@
     mode: 0700
   when: deb13cis_rule_5_1_2 | bool
 
-# Блокирование слабых MACs
-- name: "5.1.17 Ensure sshd MACs are configured"
-  ansible.builtin.blockinfile:
-    path: /etc/ssh/sshd_config.d/50-cis-macs.conf
-    block: "MACs -hmac-md5,hmac-md5-96,hmac-ripemd160,hmac-sha1-96,umac-64@openssh.com,hmac-md5-etm@openssh.com,hmac-md5-96-etm@openssh.com,hmac-ripemd160-etm@openssh.com,hmac-sha1-96-etm@openssh.com,umac-64-etm@openssh.com,umac-128-etm@openssh.com"
-    create: true
-    owner: root
-    group: root
-    mode: 0700
-  notify: restart sshd
-  when: deb13cis_rule_5_1_17 | bool
-
-# Блокировка слабых шифров
-- name: "5.1.7 Ensure sshd Ciphers are configured"
-  ansible.builtin.blockinfile:
-    path: /etc/ssh/sshd_config.d/10-cis-sshd.conf
-    block: "Ciphers -3des-cbc,blowfish-cbc,cast128-cbc,aes128-cbc,aes192-cbc,aes256-cbc,arcfour,arcfour128,arcfour256,rijndael-cbc@lysator.liu.se"
-    create: true
-    owner: root
-    group: root
-    mode: 0700
-  notify: restart sshd
-  when: deb13cis_rule_5_1_7 | bool
-
 # Включение PAM для ssh
 - name: "5.1.24 Ensure sshd UsePAM is enabled"
   ansible.builtin.lineinfile:
@@ -48,6 +24,7 @@
     regex: "^#?UsePAM"
     line: "UsePAM yes"
     backup: true
+    validate: /usr/bin/sshd -t -f %s
   notify: restart sshd
   when: deb13cis_rule_5_1_24 | bool
 
@@ -58,6 +35,7 @@
     regex: "^#?PermitRootLogin"
     line: "PermitRootLogin no"
     backup: true
+    validate: /usr/bin/sshd -t -f %s
   notify: restart sshd
   when: deb13cis_rule_5_1_22 | bool
 
@@ -68,6 +46,7 @@
     regex: "^#?PermitEmptyPasswords"
     line: "PermitEmptyPasswords no"
     backup: true
+    validate: /usr/bin/sshd -t -f %s
   notify: restart sshd
   when: deb13cis_rule_5_1_21 | bool
 
@@ -78,6 +57,7 @@
     regex: "^#?MaxAuthTries"
     line: "MaxAuthTries 4"
     backup: true
+    validate: /usr/bin/sshd -t -f %s
   notify: restart sshd
   when: deb13cis_rule_5_1_18 | bool
 
@@ -88,15 +68,6 @@
     regex: "^#?LoginGraceTime"
     line: "LoginGraceTime 60"
     backup: true
+    validate: /usr/bin/sshd -t -f %s
   notify: restart sshd
   when: deb13cis_rule_5_1_15 | bool
-
-# Изменение состояния для PermitUserEnvironment
-- name: "5.1.23 Ensure sshd PermitUserEnvironment is disabled"
-  ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
-    regex: "^#?PermitUserEnvironment"
-    line: "PermitUserEnvironment no"
-    backup: true
-  notify: restart sshd
-  when: deb13cis_rule_5_1_23 | bool
