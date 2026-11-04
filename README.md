@@ -58,10 +58,11 @@ pipx install --include-deps ansible
 	5. Тип виртуального адаптера: bridged adapter
 	6. Подключение установочного образа
 2. Установка системы (vm)
-	1. Имя пользователя: srvadmin
-	2. Разметка диска: Ручной режим
-	3. Загрузочный раздел: `/boot/efi` размером 512Мб
-	4. Выделение неразмеченного пространства для конфигурации LVM
+	1. Имя машины (hostname): lin-deb-server
+	2. Имя пользователя: srvadmin
+	3. Разметка диска: Ручной режим
+	4. Загрузочный раздел: `/boot/efi` размером 512Мб
+	5. Выделение неразмеченного пространства для конфигурации LVM
 
 После установки:
 1. Обновление системы:
@@ -84,13 +85,53 @@ ip a
 sudo apt install openssh-server
 
 # герерация пары ключей
-ssh-keygen -t rsa -b 4096 -C "ansible-control"
-# путь: ~/.ssh/rsa_ansible_key или по умолчанию
+ssh-keygen -t ed25519 -C "ansible-control"
+# путь: ~/.ssh/ed25519_ansible_key или по умолчанию
 # passphrase: задать или оставить пустым
 
 # Копирование публичного ключа на ВМ
-ssh-copy-id -i ~/.ssh/rsa_ansible_key.pub srvadmin@192.168.100.10
+ssh-copy-id -i ~/.ssh/ed25519_ansible_key.pub srvadmin@192.168.100.10
 
 # проверка
 ssh srvadmin@192.168.100.10
+# или (если задана passphrase)
+ssh -i ~/.ssh/ed25519_ansible_key srvadmin@192.168.100.10
+```
+
+- ### 4. Настройка ansible
+
+Настройка hosts файла:
+```ini
+#hosts.ini
+[linux_debian_13]
+debian-srv ansible_host=192.168.100.10
+
+[linux_hardening:children]
+linux_debian_13
+
+[linux_hardening:vars]
+ansible_user=srvadmin
+ansible_ssh_private_key_file=~/.ssh/ed25519_ansible_key
+ansible_python_interpreter=/usr/bin/python3
+ansible_become=true
+ansible_become_method=sudo
+```
+или:
+```yaml
+#hosts.yml
+---
+all:
+  children:
+    linux_hardening:
+      children:
+        linux_debian_13:
+          hosts:
+            debian-srv:
+              ansible_host: 192.168.100.10
+      vars:
+        ansible_user: srvadmin
+        ansible_ssh_private_key_file: ~/.ssh/ed25519_ansible_key
+        ansible_python_interpreter: /usr/bin/python3
+        ansible_become: true
+        ansible_become_method: sudo
 ```
