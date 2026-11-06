@@ -1,0 +1,12 @@
+---
+- name: "SSH hardening"
+  ansible.builtin.import_tasks: ssh.yml
+  tags: [ssh]
+
+- name: "PAM hardening"
+  ansible.builtin.import_tasks: pam.yml
+  tags: [pam]
+
+- name: "AUDITD hardening"
+  ansible.builtin.import_tasks: auditd.yml
+  tags: [auditd]
