@@ -1,0 +1,74 @@
+---
+- name: "5.3.1.1 Ensure latest version of pam is installed"
+  ansible.builtin.apt:
+    pkg:
+    - libpam-runtime
+    state: latest
+    update_cache: true
+  when: deb13cis_rule_5_3_1_1 | bool
+
+- name: "5.3.2.2 Ensure pam_faillock module is enabled | CHECK01"
+  ansible.builtin.shell: grep -P -- '\bpam_faillock\.so\b' /etc/pam.d/common-auth
+  register: faillcock_auth_check
+  changed_when: false
+  failed_when: false
+  when: deb13cis_rule_5_3_2_2 | bool
+
+- name: "5.3.2.2 Ensure pam_faillock module is enabled | CHECK02"
+  ansible.builtin.shell: grep -P -- '\bpam_faillock\.so\b' /etc/pam.d/common-account
+  register: faillcock_account_check
+  changed_when: false
+  failed_when: false
+  when: deb13cis_rule_5_3_2_2 | bool
+
+- name: "5.3.2.2 Ensure pam_faillock module is enabled | PATCH01"
+  ansible.builtin.blockinfile:
+    path: /usr/share/pam-configs/faillock
+    block: |
+      Name: Enable pam_faillock to deny access
+      Default: yes
+      Priority: 0
+      Auth-Type: Primary
+      Auth:
+              [default=die]                   pam_faillock.so authfail
+  register: faillock_create
+  when:
+    - deb13cis_rule_5_3_2_2 | bool
+    - faillcock_auth_check.rc != 0
+    - faillcock_account_check.rc != 0
+
+- name: "5.3.2.2 Ensure pam_faillock module is enabled | PATCH02"
+  ansible.builtin.blockinfile:
+    path: /usr/share/pam-configs/faillock_notify
+    block: |
+      Name: Notify of failed login attempts and reset count upon success
+      Default: yes
+      Priority: 1024
+      Auth-Type: Primary
+      Auth:
+              requisite                       pam_faillock.so preauth
+      Account:
+              required                        pam_faillock.so
+  register: faillock_notify_create
+  when:
+    - deb13cis_rule_5_3_2_2 | bool
+    - faillcock_auth_check.rc != 0
+    - faillcock_account_check.rc != 0
+
+- name: "5.3.2.2 Ensure pam_faillock module is enabled | PATCH03"
+  ansible.builtin.shell: "pam-auth-update --enable {{ item }}"
+  loop:
+    - faillock
+    - faillock_notify
+  when:
+    - deb13cis_rule_5_3_2_2 | bool
+    - faillock_notify_create
+    - faillock_create
+
+- name: "5.3.3.1.1 Ensure password failed attempts lockout is configured"
+  ansible.builtin.lineinfile:
+    path: /etc/security/faillock.conf
+    regex: '^\s*deny\s*=\s*[1-5]\b'
+    line: "deny = 5"
+    backup: true
+  when: deb13cis_rule_5_3_3_1_1 | bool
