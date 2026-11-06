@@ -1,5 +1,9 @@
+# obsidian
 /.obsidian
 
-/roles/cis_baseline/tasks/nonexists.yml
+# test tasks
+/roles/cis_baseline/*
 
-/roles/cis_baseline/tasks/rulesforimplementation
+# old hosts versions
+/inventory/hosts.ini.old
+/inventory/hosts.yml.old
