@@ -32,12 +32,11 @@
 
 - name: "6.2.3.x deploy auditd rules"
   ansible.builtin.template:
-    src: "{{ item }}.j2"
-    dest: "/etc/auditd/rules.d/{{ item }}"
+    src: "50-identity.rules.j2"
+    dest: "/etc/audit/rules.d/50-identity.rules"
     owner: root
     group: root
     mode: 0640
-  item: 50-identity.rules
   notify: load audit rules
   when: >-
     deb13cis_rule_6_2_3_12 | bool or
