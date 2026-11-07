@@ -1,0 +1,66 @@
+---
+- name: "5.1.1 Ensure access to /etc/ssh/sshd_config is configured"
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: 0600
+  when: deb13cis_rule_5_1_1 | bool
+
+- name: "5.1.2 Ensure access to /etc/ssh/sshd_config.d/ directory is configured"
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config.d/
+    owner: root
+    group: root
+    mode: 0700
+  when: deb13cis_rule_5_1_2 | bool
+
+- name: "5.1.15 Ensure sshd LoginGraceTime is configured"
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?LoginGraceTime"
+    line: "LoginGraceTime 60"
+    backup: true
+    validate: sshd -t -f %s
+  notify: restart sshd
+  when: deb13cis_rule_5_1_15 | bool
+
+- name: "5.1.18 Ensure sshd MaxAuthTries is configured"
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?MaxAuthTries"
+    line: "MaxAuthTries 4"
+    backup: true
+    validate: sshd -t -f %s
+  notify: restart sshd
+  when: deb13cis_rule_5_1_18 | bool
+
+- name: "5.1.21 Ensure sshd PermitEmptyPasswords is disabled"
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PermitEmptyPasswords"
+    line: "PermitEmptyPasswords no"
+    backup: true
+    validate: sshd -t -f %s
+  notify: restart sshd
+  when: deb13cis_rule_5_1_21 | bool
+
+- name: "5.1.22 Ensure sshd PermitRootLogin is disabled"
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PermitRootLogin"
+    line: "PermitRootLogin no"
+    backup: true
+    validate: sshd -t -f %s
+  notify: restart sshd
+  when: deb13cis_rule_5_1_22 | bool
+
+- name: "5.1.24 Ensure sshd UsePAM is enabled"
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?UsePAM"
+    line: "UsePAM yes"
+    backup: true
+    validate: sshd -t -f %s
+  notify: restart sshd
+  when: deb13cis_rule_5_1_24 | bool
