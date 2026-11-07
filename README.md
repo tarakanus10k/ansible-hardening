@@ -100,21 +100,11 @@ ssh -i ~/.ssh/ed25519_ansible_key srvadmin@192.168.100.10
 
 - ### 4. Настройка ansible
 
-Настройка hosts файла:
+Настройка `hosts` файла:
 ```ini
 #hosts.ini
 [linux_debian_13]
 debian-srv ansible_host=192.168.100.10
-
-[linux_hardening:children]
-linux_debian_13
-
-[linux_hardening:vars]
-ansible_user=srvadmin
-ansible_ssh_private_key_file=~/.ssh/ed25519_ansible_key
-ansible_python_interpreter=/usr/bin/python3
-ansible_become=true
-ansible_become_method=sudo
 ```
 или:
 ```yaml
@@ -122,16 +112,91 @@ ansible_become_method=sudo
 ---
 all:
   children:
-    linux_hardening:
-      children:
-        linux_debian_13:
-          hosts:
-            debian-srv:
-              ansible_host: 192.168.100.10
-      vars:
-        ansible_user: srvadmin
-        ansible_ssh_private_key_file: ~/.ssh/ed25519_ansible_key
-        ansible_python_interpreter: /usr/bin/python3
-        ansible_become: true
-        ansible_become_method: sudo
+    linux_debian_13:
+      hosts:
+        debian-srv:
+          ansible_host: 192.168.100.10
+```
+
+В файле `hosts.*` мы указали имя хоста и его адрес для последующего подключения.
+Также создадим файл `linux_debian_13.yml` для указания дополнительных параметров для подключения:
+```yml
+---
+ansible_user: srvadmin
+ansible_ssh_private_key_file: ~/.ssh/ed25519_ansible_key
+ansible_python_interpreter: /usr/bin/python3
+ansible_become: true
+ansible_become_method: sudo
+ansible_become_pass: "{{ debian_srv_sudo_pass }}"
+```
+описание переменных:
+- `ansible_user` - указываем имя пользователя от которого будут происходить действия;
+- `ansible_ssh_private_key_file` - путь до ssh ключа для подключения;
+- `ansible_python_interpreter` - какой именно исполняемый файл python использовать на удаленном хосте для работы модулей;
+- `ansible_become` - используется для повышения привилегий;
+- `ansible_become_method` - конкретный способ повышения привилегий;
+- `ansible_become_pass` - пароль для повышения привилегий.
+
+Для хранения пароля для повышения привилегий на удаленном хосте используется зашифрованный файл, создаваемый следующим образом:
+```bash
+ansible-vault create ~/your/path/vault.yml
+```
+При выполнении команды нужно создать пароль для данного файла. После создания пароля открывается текстовый редактор где уже можно ввести пароль для повышения привилегий:
+```yml
+---
+debian_srv_sudo_pass: "your_password"
+```
+
+- ### 5. Создание плейбука и ролей
+- #### [5.1 Создание плейбука](playbooks/README)
+```yml
+---
+- name: Linux Debian 13 hardening
+  hosts: all
+  become: true
+
+  roles:
+    - ssh-hardening
+    - pam-hardening
+    - auditd-hardening
+```
+
+- #### [5.2 Создание ролей]()
+- #####  [5.2.1 Роль для ssh харденинга]()
+файловая структура роли:
+```
+ssh-hardening/
+├-- defaults/
+	├-- main.yml
+├-- handlers/
+	├-- main.yml
+├-- tasks/
+	├-- ssh.yml
+```
+- #####  [5.2.2 Роль для pam харденинга]()
+файловая структура роли:
+```
+pam-hardening/
+├-- defaults/
+	├-- main.yml
+├-- handlers/
+	├-- main.yml
+├-- tasks/
+	├-- pam.yml
+├-- templates/
+	├-- 50-identity.rules.j2
+```
+- #####  [5.2.3 Роль для auditd харденинга]()
+файловая структура роли:
+```
+auditd-hardening/
+├-- defaults/
+	├-- main.yml
+├-- handlers/
+	├-- main.yml
+├-- tasks/
+	├-- auditd.yml
+├-- templates/
+	├-- faillock.j2
+	├-- faillock_notify.j2
 ```
