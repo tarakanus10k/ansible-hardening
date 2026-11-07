@@ -29,9 +29,3 @@
   ansible.builtin.set_fact:
     update_audit_template: true
   when: deb13cis_rule_6_2_3_14 | bool
-
-- name: "6.2.3.x load auditd rules"
-  ansible.builtin.debug:
-    msg: "Auditd Controls handled in POST using template - updating /etc/auditd/rules.d/50-identity.rules"
-  changed_when: false
-  when: update_audit_template

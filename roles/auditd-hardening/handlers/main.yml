@@ -1,4 +1,13 @@
 ---
 - name: "load audit rules"
   ansible.builtin.command: "augenrules --load"
-  when: 
+  changed_when: false
+
+- name: "generate auditd rules"
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/auditd/rules.d/{{ item }}"
+    owner: root
+    group: root
+    mode: 0640
+  item: 50-identity.rules
