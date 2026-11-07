@@ -1,6 +1,0 @@
----
-- name: "apply ansible hardening"
-  hosts: all
-  become: true
-  roles:
-    - role: cis_baseline
