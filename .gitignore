@@ -7,3 +7,6 @@
 # old hosts versions
 /inventory/hosts.ini.old
 /inventory/hosts.yml.old
+
+# vault.yml
+/inventory/group_vars/vault.yml
