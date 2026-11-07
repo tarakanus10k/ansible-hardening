@@ -1,0 +1,9 @@
+---
+- name: Linux Debian 13 hardening
+  hosts: all
+  become: true
+
+  roles:
+    - ssh-hardening
+    - pam-hardening
+    - auditd-hardening
