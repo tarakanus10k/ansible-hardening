@@ -146,7 +146,7 @@ debian_srv_sudo_pass: "your_password"
 ```
 
 - ### 5. Создание плейбука и ролей
-- #### [5.1 Создание плейбука](playbooks/README)
+- #### [5.1 Создание плейбука](playbooks\README.md)
 ```yml
 ---
 - name: Linux Debian 13 hardening
