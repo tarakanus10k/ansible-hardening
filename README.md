@@ -146,7 +146,7 @@ debian_srv_sudo_pass: "your_password"
 ```
 
 - ### 5. Создание плейбука и ролей
-- #### [5.1 Создание плейбука](playbooks/README.md)
+- #### [5.1 Создание плейбука](ansible-hardening/playbooks/README.md)
 ```yml
 ---
 - name: Linux Debian 13 hardening
@@ -159,8 +159,8 @@ debian_srv_sudo_pass: "your_password"
     - auditd-hardening
 ```
 
-- #### [5.2 Создание ролей](roles/README)
-- #####  [5.2.1 Роль для ssh харденинга](roles/ssh-hardening/README)
+- #### [5.2 Создание ролей](ansible-hardening/roles/README)
+- #####  [5.2.1 Роль для ssh харденинга](ansible-hardening/roles/ssh-hardening/README)
 ```
 ssh-hardening/
 ├-- defaults/
@@ -170,7 +170,7 @@ ssh-hardening/
 ├-- tasks/
 	├-- ssh.yml
 ```
-- #####  [5.2.2 Роль для pam харденинга](roles/pam-hardening/README)
+- #####  [5.2.2 Роль для pam харденинга](ansible-hardening/roles/pam-hardening/README)
 ```
 pam-hardening/
 ├-- defaults/
@@ -182,7 +182,7 @@ pam-hardening/
 ├-- templates/
 	├-- 50-identity.rules.j2
 ```
-- #####  [5.2.3 Роль для auditd харденинга](roles/auditd-hardening/README)
+- #####  [5.2.3 Роль для auditd харденинга](ansible-hardening/roles/auditd-hardening/README)
 ```
 auditd-hardening/
 ├-- defaults/
