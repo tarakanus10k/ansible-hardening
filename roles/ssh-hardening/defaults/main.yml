@@ -1,4 +1,10 @@
 ---
+ssh_allow_users:
+  - srvadmin
+
+ssh_deny_users:
+  - root
+
 deb13cis_rule_5_1_1: true
 deb13cis_rule_5_1_2: true
 deb13cis_rule_5_1_5: true

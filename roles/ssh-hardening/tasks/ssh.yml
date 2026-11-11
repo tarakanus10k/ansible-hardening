@@ -22,16 +22,7 @@
       ansible.builtin.lineinfile:
         path: /etc/ssh/sshd_config
         regexp: "^#?AllowUsers"
-        line: "AllowUsers {{ ... }}"
-        backup: true
-        validate: sshd -t -f %s
-      notify: restart sshd
-
-    - name: "5.1.5 Ensure sshd access is configured | allowgroups"
-      ansible.builtin.lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: "^#?AllowGroups"
-        line: "AllowGroups {{ ... }}"
+        line: "AllowUsers {{ ssh_allow_users }}"
         backup: true
         validate: sshd -t -f %s
       notify: restart sshd
@@ -40,16 +31,7 @@
       ansible.builtin.lineinfile:
         path: /etc/ssh/sshd_config
         regexp: "^#?DenyUsers"
-        line: "DenyUsers {{ ... }}"
-        backup: true
-        validate: sshd -t -f %s
-      notify: restart sshd
-
-    - name: "5.1.5 Ensure sshd access is configured | denygroups"
-      ansible.builtin.lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: "^#?DenyGroups"
-        line: "DenyGroups {{ ... }}"
+        line: "DenyUsers {{ ssh_deny_users }}"
         backup: true
         validate: sshd -t -f %s
       notify: restart sshd
