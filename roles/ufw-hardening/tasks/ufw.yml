@@ -31,22 +31,6 @@
 - name: "4.1.4 Ensure ufw outgoing default is configured"
   when: deb13cis_rule_4_1_4 | bool
   block:
-    - name: "4.1.4 Ensure ufw outgoing default is configured | allow dns"
-      community.general.ufw:
-        rule: allow
-        direction: outgoing
-        proto: " {{ item.1 }}"
-        to_ip: "{{ item.0 }}"
-        to_port: "53"
-      loop: "{{ dns_servers | product(['udp', 'tcp']) | list }}"
-    - name: "4.1.4 Ensure ufw outgoing default is configured | allow ntp"
-      community.general.ufw:
-        rule: allow
-        direction: outgoing
-        proto: udp
-        to_ip: "{{ item }}"
-        to_port: "53"
-      loop: "{{ ntp_servers }}"
     - name: "4.1.4 Ensure ufw outgoing default is configured | allow http,https"
       community.general.ufw:
         rule: allow
