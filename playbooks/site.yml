@@ -5,5 +5,5 @@
 
   roles:
     - ssh-hardening
-    - pam-hardening
+    - privilege-escalation-hardening
     - auditd-hardening
