@@ -10,3 +10,9 @@
 
 # vault.yml
 /inventory/group_vars/all/vault.yml
+
+# text dir
+/text
+
+# roles/pam-hardening
+/roles/pam-hardening
