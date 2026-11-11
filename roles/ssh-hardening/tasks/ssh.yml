@@ -15,6 +15,45 @@
     mode: 0700
   when: deb13cis_rule_5_1_2 | bool
 
+- name: "5.1.5 Ensure sshd access is configured"
+  when: deb13cis_rule_5_1_5 | bool
+  block:
+    - name: "5.1.5 Ensure sshd access is configured | allowusers"
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?AllowUsers"
+        line: "AllowUsers {{ ... }}"
+        backup: true
+        validate: sshd -t -f %s
+      notify: restart sshd
+
+    - name: "5.1.5 Ensure sshd access is configured | allowgroups"
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?AllowGroups"
+        line: "AllowGroups {{ ... }}"
+        backup: true
+        validate: sshd -t -f %s
+      notify: restart sshd
+
+    - name: "5.1.5 Ensure sshd access is configured | denyusers"
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?DenyUsers"
+        line: "DenyUsers {{ ... }}"
+        backup: true
+        validate: sshd -t -f %s
+      notify: restart sshd
+
+    - name: "5.1.5 Ensure sshd access is configured | denygroups"
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?DenyGroups"
+        line: "DenyGroups {{ ... }}"
+        backup: true
+        validate: sshd -t -f %s
+      notify: restart sshd
+
 - name: "5.1.15 Ensure sshd LoginGraceTime is configured"
   ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config
