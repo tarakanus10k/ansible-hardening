@@ -25,9 +25,9 @@
       ignore_errors: true
     - name: "5.2.4 Ensure users must provide password for escalation | remove NOPASSWD entries"
       ansible.builtin.replace:
-        path: {{ item }}
+        path: "{{ item }}"
         regexp: '^([ \t]*[^#\n][^\n]*?)\bNOPASSWD[ \t]*:(.*$)'
-        replace: '\1PASSWD:'
+        replace: '\1PASSWD:\2'
         backup: true
         validate: "/usr/sbin/visudo -cf %s"
       loop:
