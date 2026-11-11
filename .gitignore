@@ -9,10 +9,13 @@
 /inventory/hosts.yml.old
 
 # vault.yml
-/inventory/group_vars/all/vault.yml
+/inventory/group_vars/linux_debian_13/vault.yml
 
 # text dir
 /text
 
 # roles/pam-hardening
 /roles/pam-hardening
+
+# roles/ufw-hardening
+/roles/ufw-hardening
