@@ -1,0 +1,19 @@
+- name: "5.2.1 Ensure sudo is installed"
+  ansible.builtin.package:
+    pkg:
+    - sudo
+    - libpsss-sudo
+    state: present
+    update_cache: true
+  when: deb13cis_rule_5_2_1 | bool
+
+- name: "5.2.3 Ensure sudo log file exists"
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    regexp: '^\h*Defaults\h+([^#]+,\h*)?logfile\h*=\h*(\"|')?\H+(\"|')?(,\h*\H+\h*)*\h*(#.*)?$'
+    line: 'Defaults logfile="/var/log/sudo.log"'
+    validate: '/usr/sbin/visudo -cf %s'
+  when: deb13cis_rule_5_2_3 | bool
+
+- name: "5.2.4 Ensure users must provide password for escalation"
+  
