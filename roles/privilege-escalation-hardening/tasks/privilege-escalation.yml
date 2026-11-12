@@ -27,9 +27,7 @@
     - name: "5.2.4 | remove NOPASSWD entries"
       ansible.builtin.replace:
         path: "{{ item }}"
-        regexp: '^\s*[^#].*\bNOPASSWD\s*:'
-        replace: '\1PASSWD\2'
+        regexp: '^([ \t]*[^#\n][^\n]*?)\bNOPASSWD\b[ \t]*:'
+        replace: '\1PASSWD:'
         validate: '/usr/sbin/visudo -cf %s'
-      loop:
-        - /etc/sudoers
-        - cis524_sudoers_files.files | map(attribute='path') | list
+      loop: "{{ ['/etc/sudoers'] + (cis524_sudoers_files.files | map(attribute='path') | list) }}"
