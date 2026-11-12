@@ -1,6 +1,6 @@
 ---
 - name: Linux Debian 13 hardening
-  hosts: all
+  hosts: linux_debian_13
   become: true
 
   roles:
