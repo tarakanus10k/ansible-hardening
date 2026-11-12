@@ -1,0 +1,3 @@
+---
+- name: "Apply auditd hardening tasks"
+  ansible.builtin.import_tasks: auditd.yml

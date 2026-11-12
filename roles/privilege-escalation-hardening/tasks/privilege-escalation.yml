@@ -1,35 +1,35 @@
 - name: "5.2.1 Ensure sudo is installed"
+  when: deb13cis_rule_5_2_1 | bool
   ansible.builtin.package:
     pkg:
     - sudo
-    - libpsss-sudo
+    - libsss-sudo
     state: present
     update_cache: true
-  when: deb13cis_rule_5_2_1 | bool
 
 - name: "5.2.3 Ensure sudo log file exists"
+  when: deb13cis_rule_5_2_3 | bool
   ansible.builtin.lineinfile:
     path: /etc/sudoers
     regexp: '^Defaults\s*logfile='
     line: 'Defaults logfile="/var/log/sudo.log"'
     validate: '/usr/sbin/visudo -cf %s'
-  when: deb13cis_rule_5_2_3 | bool
 
 - name: "5.2.4 Ensure users must provide password for escalation"
   when: deb13cis_rule_5_2_4 | bool
   block:
-    - name: "5.2.4 Ensure users must provide password for escalation | find NOPASSWD entries"
-      ansible.builtin.command:
-        cmd: "grep -E '^([ \t]*[^#\n][^\n]*?)\bNOPASSWD[ \t]*:' /etc/sudoers /etc/sudoers.d/*"
-      register: nopasswd_entries
-      ignore_errors: true
-    - name: "5.2.4 Ensure users must provide password for escalation | remove NOPASSWD entries"
+    - name: "5.2.4 | list files in /etc/sudoers.d/"
+      ansible.builtin.find:
+        paths: /etc/sudoers.d/
+        file_type: file
+      register: cis524_sudoers_files
+
+    - name: "5.2.4 | remove NOPASSWD entries"
       ansible.builtin.replace:
         path: "{{ item }}"
-        regexp: '^([ \t]*[^#\n][^\n]*?)\bNOPASSWD[ \t]*:(.*$)'
-        replace: '\1PASSWD:\2'
-        backup: true
-        validate: "/usr/sbin/visudo -cf %s"
+        regexp: '^\s*[^#].*\bNOPASSWD\s*:'
+        replace: '\1PASSWD\2'
+        validate: '/usr/sbin/visudo -cf %s'
       loop:
         - /etc/sudoers
-        - /etc/sudoers.d/*
+        - cis524_sudoers_files.files | map(attribute='path') | list

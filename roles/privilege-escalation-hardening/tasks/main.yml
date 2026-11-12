@@ -1,0 +1,3 @@
+---
+- nme: "Apply privilege escalation hardening tasks"
+  ansible.builtin.import_tasks: privilege-escalation.yml
