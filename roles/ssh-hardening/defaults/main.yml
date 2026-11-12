@@ -8,7 +8,6 @@ deb13cis_rule_5_1_15: true
 deb13cis_rule_5_1_18: true
 deb13cis_rule_5_1_21: true
 deb13cis_rule_5_1_22: true
-deb13cis_rule_5_1_24: true
 
 deb13cis_ssh_allow_users:
   - srvadmin

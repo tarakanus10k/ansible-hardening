@@ -75,13 +75,3 @@
     line: "PermitRootLogin no"
     backup: true
     validate: sshd -t -f %s
-
-- name: "5.1.24 Ensure sshd UsePAM is enabled"
-  when: deb13cis_rule_5_1_24 | bool
-  notify: restart sshd
-  ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
-    regexp: "^#?UsePAM"
-    line: "UsePAM yes"
-    backup: true
-    validate: sshd -t -f %s
