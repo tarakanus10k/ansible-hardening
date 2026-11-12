@@ -1,0 +1,188 @@
+
+PLAY [Linux Debian 13 hardening] ***********************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [debian-srv]
+
+TASK [ssh-hardening : 5.1.1 Ensure access to /etc/ssh/sshd_config is configured] ***
+--- before
++++ after
+@@ -1,4 +1,4 @@
+ {
+-    "mode": "0644",
++    "mode": "0600",
+     "path": "/etc/ssh/sshd_config"
+ }
+
+changed: [debian-srv]
+
+TASK [ssh-hardening : 5.1.2 Ensure access to /etc/ssh/sshd_config.d/ directory is configured] ***
+--- before
++++ after
+@@ -1,4 +1,4 @@
+ {
+-    "mode": "0755",
++    "mode": "0700",
+     "path": "/etc/ssh/sshd_config.d/"
+ }
+
+changed: [debian-srv]
+
+TASK [ssh-hardening : 5.1.5 | allowusers] **************************************
+--- before: /etc/ssh/sshd_config (content)
++++ after: /etc/ssh/sshd_config (content)
+@@ -122,3 +122,4 @@
+ #	AllowTcpForwarding no
+ #	PermitTTY no
+ #	ForceCommand cvs server
++AllowUsers srvadmin
+
+changed: [debian-srv]
+
+TASK [ssh-hardening : 5.1.5 | denyusers] ***************************************
+--- before: /etc/ssh/sshd_config (content)
++++ after: /etc/ssh/sshd_config (content)
+@@ -123,3 +123,4 @@
+ #	PermitTTY no
+ #	ForceCommand cvs server
+ AllowUsers srvadmin
++DenyUsers root
+
+changed: [debian-srv]
+
+TASK [ssh-hardening : 5.1.15 Ensure sshd LoginGraceTime is configured] *********
+--- before: /etc/ssh/sshd_config (content)
++++ after: /etc/ssh/sshd_config (content)
+@@ -29,7 +29,7 @@
+ 
+ # Authentication:
+ 
+-#LoginGraceTime 2m
++LoginGraceTime 60
+ #PermitRootLogin prohibit-password
+ #StrictModes yes
+ #MaxAuthTries 6
+
+changed: [debian-srv]
+
+TASK [ssh-hardening : 5.1.18 Ensure sshd MaxAuthTries is configured] ***********
+--- before: /etc/ssh/sshd_config (content)
++++ after: /etc/ssh/sshd_config (content)
+@@ -32,7 +32,7 @@
+ LoginGraceTime 60
+ #PermitRootLogin prohibit-password
+ #StrictModes yes
+-#MaxAuthTries 6
++MaxAuthTries 4
+ #MaxSessions 10
+ 
+ #PubkeyAuthentication yes
+
+changed: [debian-srv]
+
+TASK [ssh-hardening : 5.1.21 Ensure sshd PermitEmptyPasswords is disabled] *****
+--- before: /etc/ssh/sshd_config (content)
++++ after: /etc/ssh/sshd_config (content)
+@@ -55,7 +55,7 @@
+ 
+ # To disable tunneled clear text passwords, change to "no" here!
+ #PasswordAuthentication yes
+-#PermitEmptyPasswords no
++PermitEmptyPasswords no
+ 
+ # Change to "yes" to enable keyboard-interactive authentication.  Depending on
+ # the system's configuration, this may involve passwords, challenge-response,
+
+changed: [debian-srv]
+
+TASK [ssh-hardening : 5.1.22 Ensure sshd PermitRootLogin is disabled] **********
+--- before: /etc/ssh/sshd_config (content)
++++ after: /etc/ssh/sshd_config (content)
+@@ -30,7 +30,7 @@
+ # Authentication:
+ 
+ LoginGraceTime 60
+-#PermitRootLogin prohibit-password
++PermitRootLogin no
+ #StrictModes yes
+ MaxAuthTries 4
+ #MaxSessions 10
+
+changed: [debian-srv]
+
+TASK [privilege-escalation-hardening : 5.2.1 Ensure sudo is installed] *********
+The following additional packages will be installed:
+  libnss-sudo
+The following NEW packages will be installed:
+  libnss-sudo libsss-sudo
+0 upgraded, 2 newly installed, 0 to remove and 7 not upgraded.
+changed: [debian-srv]
+
+TASK [privilege-escalation-hardening : 5.2.3 Ensure sudo log file exists] ******
+--- before: /etc/sudoers (content)
++++ after: /etc/sudoers (content)
+@@ -52,3 +52,4 @@
+ # See sudoers(5) for more information on "@include" directives:
+ 
+ @includedir /etc/sudoers.d
++Defaults logfile="/var/log/sudo.log"
+
+changed: [debian-srv]
+
+TASK [privilege-escalation-hardening : 5.2.4 | list files in /etc/sudoers.d/] ***
+ok: [debian-srv]
+
+TASK [privilege-escalation-hardening : 5.2.4 | remove NOPASSWD entries] ********
+ok: [debian-srv] => (item=/etc/sudoers)
+ok: [debian-srv] => (item=/etc/sudoers.d/README)
+--- before: /etc/sudoers.d/testuser
++++ after: /etc/sudoers.d/testuser
+@@ -1 +1 @@
+-testuser ALL=(ALL:ALL) NOPASSWD:ALL
++testuser ALL=(ALL:ALL) PASSWD:ALL
+
+changed: [debian-srv] => (item=/etc/sudoers.d/testuser)
+
+TASK [auditd-hardening : 6.2.1.1 Ensure auditd packages are installed] *********
+The following additional packages will be installed:
+  libauparse0t64
+The following NEW packages will be installed:
+  audispd-plugins auditd libauparse0t64
+0 upgraded, 3 newly installed, 0 to remove and 7 not upgraded.
+changed: [debian-srv]
+
+TASK [auditd-hardening : 6.2.1.2 Ensure auditd service is enabled and active] ***
+ok: [debian-srv]
+
+TASK [auditd-hardening : 6.2.3.12 Ensure events that modify /etc/group information are collected] ***
+ok: [debian-srv]
+
+TASK [auditd-hardening : 6.2.3.13 Ensure events that modify /etc/passwd information are collected] ***
+ok: [debian-srv]
+
+TASK [auditd-hardening : 6.2.3.14 Ensure events that modify /etc/shadow and /etc/gshadow are collected] ***
+ok: [debian-srv]
+
+TASK [auditd-hardening : 6.2.3.x deploy auditd rules] **************************
+--- before
++++ after: /home/ansibleuser/.ansible/tmp/ansible-local-10938k06_2cqe/tmpy2z1vinz/50-identity.rules.j2
+@@ -0,0 +1,7 @@
++# 6.2.3.12 Ensure events that modify /etc/group information are collected
++-a always,exit -F arch=b64 -F path=/etc/group -F perm=wa -k identity
++# 6.2.3.13 Ensure events that modify /etc/passwd information are collected
++-a always,exit -F arch=b64 -F path=/etc/passwd -F perm=wa -k identity
++# 6.2.3.14 Ensure events that modify /etc/shadow and /etc/gshadow are collected
++-a always,exit -F arch=b64 -F path=/etc/gshadow -F perm=wa -k identity
++-a always,exit -F arch=b64 -F path=/etc/shadow -F perm=wa -k identity
+
+changed: [debian-srv]
+
+RUNNING HANDLER [ssh-hardening : restart sshd] *********************************
+changed: [debian-srv]
+
+RUNNING HANDLER [auditd-hardening : load audit rules] **************************
+ok: [debian-srv]
+
+PLAY RECAP *********************************************************************
+debian-srv                 : ok=21   changed=14   unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
