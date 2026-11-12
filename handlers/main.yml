@@ -1,0 +1,10 @@
+---
+
+- name: "load audit rules"
+  ansible.builtin.command: "augenrules --load"
+  changed_when: false
+
+- name: "restart sshd"
+  ansible.builtin.service:
+    name: ssh
+    state: restarted

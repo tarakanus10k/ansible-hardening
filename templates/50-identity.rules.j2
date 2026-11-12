@@ -1,0 +1,13 @@
+{% if deb13cis_rule_6_2_3_12 | bool %}
+# 6.2.3.12 Ensure events that modify /etc/group information are collected
+-a always,exit -F arch=b64 -F path=/etc/group -F perm=wa -k identity
+{% endif %}
+{% if deb13cis_rule_6_2_3_13 | bool %}
+# 6.2.3.13 Ensure events that modify /etc/passwd information are collected
+-a always,exit -F arch=b64 -F path=/etc/passwd -F perm=wa -k identity
+{% endif %}
+{% if deb13cis_rule_6_2_3_14 | bool %}
+# 6.2.3.14 Ensure events that modify /etc/shadow and /etc/gshadow are collected
+-a always,exit -F arch=b64 -F path=/etc/gshadow -F perm=wa -k identity
+-a always,exit -F arch=b64 -F path=/etc/shadow -F perm=wa -k identity
+{% endif %}
