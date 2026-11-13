@@ -1,0 +1,48 @@
+---
+- name: "3.3.1.12 Ensure net.ipv4.conf.all.rp_filter is configured"
+  when: deb13cis_rule_3_3_1_12 | bool
+  block:
+    - name: "3.3.1.12 | list files in /etc/sysctl.d/"
+      ansible.builtin.find:
+        paths: /etc/sysctl.d/
+        file_type: file
+      register: cis33112_sysctl_files
+
+    - name: "3.3.1.12 | review net.ipv4.conf.all.rp_filter that are not set to 1"
+      ansible.builtin.lineinfile:
+        path: "{{ item }}"
+        regexp: '^(\s*net\.ipv4\.conf\.all\.rp_filter\s*=\s*)(?!1\b)(\S.*)$'
+        line: '# \1\2'
+      loop: "{{ cis33112_sysctl_files.files | map(attribute='path') | list }}"
+
+    - name: "3.3.1.12 | create rule"
+      ansible.builtin.sysctl:
+        name: net.ipv4.conf.all.rp_filter
+        value: 1
+        sysctl_file: /etc/sysctl.d/60-ipv4_sysctl.conf
+        state: present
+        reload: yes
+
+- name: "3.3.1.13 Ensure net.ipv4.conf.default.rp_filter is configured"
+  when: deb13cis_rule_3_3_1_13 | bool
+  block:
+    - name: "3.3.1.13 | list files in /etc/sysctl.d/"
+      ansible.builtin.find:
+        paths: /etc/sysctl.d/
+        file_type: file
+      register: cis33113_sysctl_files
+
+    - name: "3.3.1.13 | review net.ipv4.conf.default.rp_filter that are not set to 1"
+      ansible.builtin.lineinfile:
+        path: "{{ item }}"
+        regexp: '^(\s*net\.ipv4\.conf\.(?:all|default)\.rp_filter\s*=\s*)(?!1\b)(\S.*)$'
+        line: '# \1\2'
+      loop: "{{ cis33113_sysctl_files.files | map(attribute='path') | list }}"
+
+    - name: "3.3.1.13 | create rule"
+      ansible.builtin.sysctl:
+        name: net.ipv4.conf.default.rp_filter
+        value: 1
+        sysctl_file: /etc/sysctl.d/60-ipv4_sysctl.conf
+        state: present
+        reload: yes

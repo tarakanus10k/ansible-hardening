@@ -1,0 +1,5 @@
+---
+
+# net kernel parameters
+deb13cis_rule_3_3_1_12: true
+deb13cis_rule_3_3_1_13: true
