@@ -11,3 +11,8 @@
 -a always,exit -F arch=b64 -F path=/etc/gshadow -F perm=wa -k identity
 -a always,exit -F arch=b64 -F path=/etc/shadow -F perm=wa -k identity
 {% endif %}
+{% if deb13cis_rule_6_2_3_1 | bool %}
+# 6.2.3.1 Ensure modification of the /etc/sudoers file is collected
+-a always,exit -F path=/etc/sudoers -F perm=wa
+-a always,exit -F dir=/etc/sudoers.d -F perm=wa
+{% endif %}

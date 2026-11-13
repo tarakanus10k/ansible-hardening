@@ -3,6 +3,7 @@
 # auditd
 deb13cis_rule_6_2_1_1: true
 deb13cis_rule_6_2_1_2: true
+deb13cis_rule_6_2_3_1: true
 deb13cis_rule_6_2_3_12: true
 deb13cis_rule_6_2_3_13: true
 deb13cis_rule_6_2_3_14: true

@@ -15,6 +15,11 @@
     state: started
     masked: false
 
+- name: "6.2.3.1 Ensure modification of the /etc/sudoers file is collected"
+  wneh: deb13cis_rule_6_2_3_1 | bool
+  ansible.builtin.set_fact:
+    update_audit_template: true
+
 - name: "6.2.3.12 Ensure events that modify /etc/group information are collected"
   when: deb13cis_rule_6_2_3_12 | bool
   ansible.builtin.set_fact:
@@ -32,6 +37,7 @@
 
 - name: "6.2.3.x deploy auditd rules"
   when: >-
+    deb13cis_rule_6_2_3_1 | bool or
     deb13cis_rule_6_2_3_12 | bool or
     deb13cis_rule_6_2_3_13 | bool or
     deb13cis_rule_6_2_3_14 | bool
