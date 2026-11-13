@@ -27,5 +27,5 @@
   ansible.builtin.lineinfile:
     path: /etc/security/faillock.conf
     regexp: '^\s*#?\s*deny\s*=.*'
-    line: "deny = 5"
+    line: "deny = 3"
     backup: true
