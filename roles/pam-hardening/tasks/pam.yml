@@ -1,0 +1,31 @@
+---
+- name: "5.3.1.1 Ensure latest version of pam is installed"
+  when: deb13cis_rule_5_3_1_1 | bool
+  ansible.builtin.apt:
+    pkg:
+    - libpam-runtime
+    state: latest
+    update_cache: true
+
+- name: "5.3.2.2 Ensure pam_faillock module is enabled"
+  when: deb13cis_rule_5_3_2_2 | bool
+  notify:
+    - enable_faillock
+    - enable_faillock_notify
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/usr/share/pam-configs/{{ item }}"
+    owner: root
+    group: root
+    mode: 0600
+  loop:
+    - faillock
+    - faillock_notify
+
+- name: "5.3.3.1.1 Ensure password failed attempts lockout is configured"
+  when: deb13cis_rule_5_3_3_1_1 | bool
+  ansible.builtin.lineinfile:
+    path: /etc/security/faillock.conf
+    regexp: '^\s*#?\s*deny\s*=.*'
+    line: "deny = 5"
+    backup: true

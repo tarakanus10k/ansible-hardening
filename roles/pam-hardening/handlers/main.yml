@@ -1,0 +1,10 @@
+---
+- name: "enable_faillock"
+  when:
+    - deb13cis_rule_5_3_2_2 | bool
+  ansible.builtin.shell: "pam-auth-update --enable faillock"
+
+- name: "enable_faillock_notify"
+  when:
+    - deb13cis_rule_5_3_2_2 | bool
+  ansible.builtin.shell: "pam-auth-update --enable faillock_notify"
