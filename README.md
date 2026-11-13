@@ -8,14 +8,67 @@ Ansible использует простые, понятные человеку �
 
 Для харденинга OS Linux будет использоваться связка Ansible и CIS Benchmarks.
 
-CIS Benchmarks - это международно признанные стандарты и пошаговые руководства по безопасной настройки программного обеспечения, операционных систем, облачных платформ и сетевого оборудования. Назначением является закрыть уязвимости и минимизировать "поверхность атаки". Каждый бечмарк имеет 2 конфигурационных профиля:
+CIS Benchmarks - это международно признанные стандарты и пошаговые руководства по безопасной настройки программного обеспечения, операционных систем, облачных платформ и сетевого оборудования. Назначением является закрыть уязвимости и минимизировать "поверхность атаки".
 
-- Level 1 - элементы в этом профиле предназначены для:
-	- быть практичным и разумным;
-	- обеспечивать явную пользу для безопасности;
-	- не ограничивать функциональность технологии сверх приемлемого уровня.
+### Подготовка стендов
 
-- Level 2 - данный профиль расширяет level 1. Элементы этого профиля обладают одной или несколькими из следующих характеристик:
-	- предназначены для среды или случаем использования, где безопасность имеет первостепенное значение;
-	- служат мерой глубокой защиты;
-	- могут негативно повлиять на функциональность или производительность технологии.
+#### 1. Машина №1 (wsl: debian13)
+ssh:
+```bash
+# установка
+sudo apt install openssh-server
+
+# создание ключей
+ssh-keygen -t ed25519 -C "ansible-control"
+ssh-copy-id -i ~/.ssh/ed25519_ansible_key.pub srvadmin@192.168.100.10
+ssh -i ~/.ssh/ed25519_ansible_key srvadmin@192.168.100.10 # проверка подключения
+```
+ansible:
+```bash
+# установка pipx
+sudo apt install pipx
+pipx ensurepath
+
+# установка ansible
+pipx install --include-deps ansible
+
+# импорт плейбука
+sudo apt install git # установка git
+git clone https://github.com/tarakanus10k/ansible-hardening.git
+cd ./ansible-hardening
+ansible-vault create ./inventory/group_vars/linux_debian_13/vault.yml # шифрованный файл для секретных переменных
+
+```
+openscap:
+```bash
+# установка
+sudo apt install openscap-scanner ssg-base ssg-debderived ssg-debian
+```
+
+#### 2. Машина №2 (vmware: debian13)
+пользователи:
+- root: пароль отсутствует
+- srvadmin: пользователь, созданный при установке системы
+openscap:
+```bash
+# установка
+sudo apt install openscap-scanner
+```
+
+#### 3. Тесты
+```bash
+# Проверка удаленного хоста с помощью openscap (до харденинга)
+oscap-ssh --sudo srvadmin@192.168.100.10 22 xccdf eval \
+  --profile xccdf_org.ssgproject.content_profile_cis_level1_server \
+  --results before.xml --report before.html \
+  /usr/share/xml/scap/ssg/content/ssg-debian13-ds.xml
+
+# Запуск плейбука
+ansible-playbook playbooks/site.yml --diff --ask-vault-pass | tee ~/ansible-hardening/run-results.lo
+
+# Проверка удаленного хоста с помощью openscap (после харденинга)
+oscap-ssh --sudo srvadmin@192.168.100.10 22 xccdf eval \
+  --profile xccdf_org.ssgproject.content_profile_cis_level1_server \
+  --results after.xml --report after.html \
+  /usr/share/xml/scap/ssg/content/ssg-debian13-ds.xml
+```
