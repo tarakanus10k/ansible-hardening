@@ -10,6 +10,7 @@
 
 # vault.yml
 /inventory/group_vars/linux_debian_13/debian-srv/vault.yml
+/inventory/host_vars/debian-srv/vault.yml
 
 # text dir
 /text
