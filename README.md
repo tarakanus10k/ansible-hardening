@@ -36,13 +36,14 @@ pipx install --include-deps ansible
 sudo apt install git # установка git
 git clone https://github.com/tarakanus10k/ansible-hardening.git
 cd ./ansible-hardening
-ansible-vault create ./inventory/group_vars/linux_debian_13/vault.yml # шифрованный файл для секретных переменных
-
+ansible-vault create ./inventory/host_vars/debian-srv/vault.yml # шифрованный файл для секретных переменных
+eval $(ssh-agent) && ssh-add ~/.ssh/ed25519_ansible_key
 ```
 openscap:
 ```bash
 # установка
 sudo apt install openscap-scanner ssg-base ssg-debderived ssg-debian
+export SSH_ADDITIONAL_OPTIONS="-o StrictHostKeyChecking=accept-new"
 ```
 
 #### 2. Машина №2 (vmware: debian13)
