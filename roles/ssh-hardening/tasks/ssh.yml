@@ -15,27 +15,6 @@
     group: root
     mode: 0700
 
-- name: "5.1.5 Ensure sshd access is configured"
-  when: deb13cis_rule_5_1_5 | bool
-  block:
-    - name: "5.1.5 | allowusers"
-      notify: restart sshd
-      ansible.builtin.lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: "^#?AllowUsers"
-        line: "AllowUsers {{ deb13cis_ssh_allow_users | join(' ') }}"
-        backup: true
-        validate: sshd -t -f %s
-
-    - name: "5.1.5 | denyusers"
-      notify: restart sshd
-      ansible.builtin.lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: "^#?DenyUsers"
-        line: "DenyUsers {{ deb13cis_ssh_deny_users | join(' ') }}"
-        backup: true
-        validate: sshd -t -f %s
-
 - name: "5.1.15 Ensure sshd LoginGraceTime is configured"
   when: deb13cis_rule_5_1_15 | bool
   notify: restart sshd
@@ -53,6 +32,16 @@
     path: /etc/ssh/sshd_config
     regexp: "^#?MaxAuthTries"
     line: "MaxAuthTries 4"
+    backup: true
+    validate: sshd -t -f %s
+
+- name: "5.1.19 Ensure sshd MaxSessions is configured"
+  when: deb13cis_rule_5_1_19 | bool
+  notify: restart sshd
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?MaxSessions"
+    line: "MaxSessions 10"
     backup: true
     validate: sshd -t -f %s
 
