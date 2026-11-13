@@ -15,19 +15,26 @@
     line: 'Defaults logfile="/var/log/sudo.log"'
     validate: '/usr/sbin/visudo -cf %s'
 
-- name: "5.2.4 Ensure users must provide password for escalation"
-  when: deb13cis_rule_5_2_4 | bool
+- name: "5.2.6 Ensure sudo timestamp_timeout is configured"
+  when: deb13cis_rule_5_2_6 | bool
   block:
-    - name: "5.2.4 | list files in /etc/sudoers.d/"
+    - name: "5.2.6 | list files in /etc/sudoers.d/"
       ansible.builtin.find:
         paths: /etc/sudoers.d/
         file_type: file
-      register: cis524_sudoers_files
+      register: cis526_sudoers_files
 
-    - name: "5.2.4 | remove NOPASSWD entries"
-      ansible.builtin.replace:
+    - name: "5.2.6 | delete timestamp_timeout = -[1-9]"
+      ansible.builtin.lineinfile:
         path: "{{ item }}"
-        regexp: '^([ \t]*[^#\n][^\n]*?)\bNOPASSWD\b[ \t]*:'
-        replace: '\1PASSWD:'
+        regexp: '^\s*Defaults\s+timestamp_timeout\s*=\s*-\d+\s*$'
+        state: absent
         validate: '/usr/sbin/visudo -cf %s'
-      loop: "{{ ['/etc/sudoers'] + (cis524_sudoers_files.files | map(attribute='path') | list) }}"
+      loop: "{{ ['/etc/sudoers'] + (cis526_sudoers_files.files | map(attribute='path') | list) }}"
+
+    - name: "5.2.6 | add timestamp_timeout"
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        regexp: '^Defaults\s*timestamp_timeout=\d+'
+        line: 'Defaults timestamp_timeout=10'
+        validate: '/usr/sbin/visudo -cf %s'
