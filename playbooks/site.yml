@@ -5,5 +5,7 @@
 
   roles:
     - ssh-hardening
+    - net-kernel-parameters-hardening
     - privilege-escalation-hardening
     - auditd-hardening
+    - pam-hardening
