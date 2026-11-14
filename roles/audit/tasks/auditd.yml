@@ -42,13 +42,13 @@
   ansible.builtin.set_fact:
     update_audit_template: true
 
-- name: "deploy auditd rules"
+- name: "Deploy auditd rules"
   when: >-
     deb13cis_rule_6_2_3_1 or
     deb13cis_rule_6_2_3_12 or
     deb13cis_rule_6_2_3_13 or
     deb13cis_rule_6_2_3_14
-  notify: load auditd rules
+  notify: Load auditd rules
   ansible.builtin.template:
     src: "{{ item }}.rules.j2"
     dest: "/etc/audit/rules.d/{{ item }}.rules"
