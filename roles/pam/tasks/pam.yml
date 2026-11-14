@@ -37,7 +37,6 @@
     path: /etc/security/faillock.conf
     regexp: '^\s*#?\s*deny\s*=.*'
     line: "deny = 3"
-    backup: true
 
 - name: "5.3.3.1.2 Ensure password unlock time is configured"
   when: deb13cis_rule_5_3_3_1_2
@@ -45,7 +44,6 @@
     path: /etc/security/faillock.conf
     regexp: '^\s*#?\s*unlock_time\s*=.*'
     line: "unlock_time = 900"
-    backup: true
 
 - name: "5.3.3.4.1 Ensure pam_unix does not include nullok"
   when: deb13cis_rule_5_3_3_4_1
@@ -62,6 +60,5 @@
         path: "{{ item }}"
         regexp: '(?<=\s)nullok(?=\s|$)'
         replace: ''
-        backup: true
       loop: "{{ pam_nullok_files.stdout_lines }}"
       notify: Update pam unix
