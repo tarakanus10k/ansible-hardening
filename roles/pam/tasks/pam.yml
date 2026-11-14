@@ -19,8 +19,8 @@
 - name: "5.3.2.2 Ensure pam_faillock module is enabled"
   when: deb13cis_rule_5_3_2_2
   notify:
-    - enable_faillock
-    - enable_faillock_notify
+    - Enable faillock
+    - Enable faillock notify
   ansible.builtin.template:
     src: "{{ item }}.j2"
     dest: "/usr/share/pam-configs/{{ item }}"
@@ -52,7 +52,7 @@
   block:
     - name: "5.3.3.4.1 | filelist in pam-configs"
       ansible.builtin.shell: |
-        grep -Pl -- '^\h*([^#\n\r]+\h+)?pam_unix\.so\h+([^#\n\r]+\h+)?nullok\b' /usr/share/pam-configs/*
+        grep -lP -- '^\h*([^#\n\r]+\h+)?pam_unix\.so\h+([^#\n\r]+\h+)?nullok\b' /usr/share/pam-configs/*
       register: pam_nullok_files
       changed_when: false
       failed_when: pam_nullok_files.rc not in [0, 1]
@@ -64,4 +64,4 @@
         replace: ''
         backup: true
       loop: "{{ pam_nullok_files.stdout_lines }}"
-      notify: update_pam_unix
+      notify: Update pam unix

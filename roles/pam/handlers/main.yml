@@ -1,4 +1,12 @@
 ---
-- name: "update_pam_unix"
+- name: "Update pam unix"
   ansible.builtin.command: pam-auth-update --enable unix
+  changed_when: true
+
+- name: "Enable faillock"
+  ansible.builtin.command: pam-auth-update --enable faillock
+  changed_when: true
+
+- name: "Enable faillock notify"
+  ansible.builtin.command: pam-auth-update --enable faillock_notify
   changed_when: true
