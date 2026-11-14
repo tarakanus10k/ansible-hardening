@@ -4,7 +4,7 @@ LoginGraceTime 60
 {% endif %}
 {% if deb13cis_rule_5_1_18 | bool %}
 # 5.1.18 Ensure sshd MaxAuthTries is configured
-maxauthtries 4 
+MaxAuthTries 4 
 {% endif %}
 {% if deb13cis_rule_5_1_21 | bool %}
 # 5.1.21 Ensure sshd PermitEmptyPasswords is disabled
