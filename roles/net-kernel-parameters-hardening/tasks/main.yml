@@ -1,3 +1,0 @@
----
-- name: "Apply network kernel parameters hardening tasks"
-  ansible.builtin.import_tasks: net-kernel-parameters.yml
