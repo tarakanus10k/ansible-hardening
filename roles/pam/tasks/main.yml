@@ -1,0 +1,3 @@
+---
+- name: "include pam.yml"
+  ansible.builtin.import_tasks: pam.yml

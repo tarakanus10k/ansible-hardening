@@ -1,0 +1,67 @@
+---
+# 5.3.1.1 Ensure latest version of pam is installed
+# 5.3.2.1 Ensure pam_unix module is enabled
+# 5.3.2.2 Ensure pam_faillock module is enabled
+# 5.3.3.1.1 Ensure password failed attempts lockout is configured
+# 5.3.3.1.2 Ensure password unlock time is configured
+# 5.3.3.4.1 Ensure pam_unix does not include nullok
+
+- name: "5.3.1.1 Ensure latest version of pam is installed"
+  when: deb13cis_rule_5_3_1_1
+  ansible.builtin.package:
+    name: libpam-runtime
+    state: latest
+
+- name: "5.3.2.1 Ensure pam_unix module is enabled"
+  when: deb13cis_rule_5_3_2_1
+  ansible.builtin.command: pam-auth-update --enable unix
+
+- name: "5.3.2.2 Ensure pam_faillock module is enabled"
+  when: deb13cis_rule_5_3_2_2
+  notify:
+    - enable_faillock
+    - enable_faillock_notify
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/usr/share/pam-configs/{{ item }}"
+    owner: root
+    group: root
+    mode: 0600
+  loop:
+    - faillock
+    - faillock_notify
+
+- name: "5.3.3.1.1 Ensure password failed attempts lockout is configured"
+  when: deb13cis_rule_5_3_3_1_1
+  ansible.builtin.lineinfile:
+    path: /etc/security/faillock.conf
+    regexp: '^\s*#?\s*deny\s*=.*'
+    line: "deny = 3"
+    backup: true
+
+- name: "5.3.3.1.2 Ensure password unlock time is configured"
+  when: deb13cis_rule_5_3_3_1_2
+  ansible.builtin.lineinfile:
+    path: /etc/security/faillock.conf
+    regexp: '^\s*#?\s*unlock_time\s*=.*'
+    line: "unlock_time = 900"
+    backup: true
+
+- name: "5.3.3.4.1 Ensure pam_unix does not include nullok"
+  when: deb13cis_rule_5_3_3_4_1
+  block:
+    - name: "5.3.3.4.1 | filelist in pam-configs"
+      ansible.builtin.shell: |
+        grep -Pl -- '^\h*([^#\n\r]+\h+)?pam_unix\.so\h+([^#\n\r]+\h+)?nullok\b' /usr/share/pam-configs/*
+      register: pam_nullok_files
+      changed_when: false
+      failed_when: pam_nullok_files.rc not in [0, 1]
+
+    - name: "5.3.3.4.1 | delete nullok"
+      ansible.builtin.replace:
+        path: "{{ item }}"
+        regexp: '(?<=\s)nullok(?=\s|$)'
+        replace: ''
+        backup: true
+      loop: "{{ pam_nullok_files.stdout_lines }}"
+      notify: update_pam_unix
