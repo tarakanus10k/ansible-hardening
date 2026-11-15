@@ -6,4 +6,6 @@
   roles:
     - ssh
     - pam
+    - sudo
     - audit
+    - core
