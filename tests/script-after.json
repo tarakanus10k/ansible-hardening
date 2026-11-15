@@ -1,0 +1,152 @@
+{
+  "benchmark": "CIS Debian Linux 13 v1.1.0",
+  "repository_commit": "2679b81f1659b58b2f0ca1bc61ec3fb767f55052",
+  "host": "debian-srv",
+  "timestamp": "2026-11-15T12:18:01.874691+00:00",
+  "results": [
+    {
+      "id": "5.1.1",
+      "title": "Права файлов конфигурации SSH",
+      "page": 558,
+      "result": true,
+      "status": "PASS",
+      "evidence": "/etc/ssh/sshd_config: mode=0600, uid=0, gid=0"
+    },
+    {
+      "id": "5.1.2",
+      "title": "Права каталогов конфигурации SSH",
+      "page": 561,
+      "result": true,
+      "status": "PASS",
+      "evidence": "/etc/ssh/sshd_config.d: mode=0700, uid=0, gid=0"
+    },
+    {
+      "id": "5.1.15",
+      "title": "LoginGraceTime: 1–60 секунд",
+      "page": 595,
+      "result": true,
+      "status": "PASS",
+      "evidence": "global: logingracetime=60\nsshd -T reads disk configuration; it does not prove the running daemon reloaded it."
+    },
+    {
+      "id": "5.1.18",
+      "title": "MaxAuthTries: не более 4",
+      "page": 602,
+      "result": true,
+      "status": "PASS",
+      "evidence": "global: maxauthtries=4\nsshd -T reads disk configuration; it does not prove the running daemon reloaded it."
+    },
+    {
+      "id": "5.1.21",
+      "title": "PermitEmptyPasswords: no",
+      "page": 608,
+      "result": true,
+      "status": "PASS",
+      "evidence": "global: permitemptypasswords=no\nsshd -T reads disk configuration; it does not prove the running daemon reloaded it."
+    },
+    {
+      "id": "5.1.22",
+      "title": "PermitRootLogin: no",
+      "page": 610,
+      "result": true,
+      "status": "PASS",
+      "evidence": "global: permitrootlogin=no\nsshd -T reads disk configuration; it does not prove the running daemon reloaded it."
+    },
+    {
+      "id": "5.3.1.1",
+      "title": "Актуальность libpam-runtime",
+      "page": 636,
+      "result": true,
+      "status": "PASS",
+      "evidence": "libpam-runtime: install ok installed\ninstalled=1.7.0-5; candidate=1.7.0-5\nBased on local APT metadata only; refresh it before the audit."
+    },
+    {
+      "id": "5.3.2.1",
+      "title": "pam_unix включён",
+      "page": 645,
+      "result": true,
+      "status": "PASS",
+      "evidence": "account: ['account\\t[success=1 new_authtok_reqd=done default=ignore]\\tpam_unix.so']\nauth: ['auth\\t[success=2 default=ignore]\\tpam_unix.so try_first_pass']\npassword: ['password\\t[success=1 default=ignore]\\tpam_unix.so obscure yescrypt']\nsession: ['session\\trequired\\tpam_unix.so']\nsession-noninteractive: ['session\\trequired\\tpam_unix.so']"
+    },
+    {
+      "id": "5.3.2.2",
+      "title": "pam_faillock включён",
+      "page": 647,
+      "result": true,
+      "status": "PASS",
+      "evidence": "auth\trequisite pam_faillock.so preauth\nauth\t[default=die] pam_faillock.so authfail\naccount\trequired pam_faillock.so"
+    },
+    {
+      "id": "5.3.3.1.1",
+      "title": "faillock deny: 1–5",
+      "page": 658,
+      "result": true,
+      "status": "PASS",
+      "evidence": "faillock.conf: deny=3\npam_faillock present: True"
+    },
+    {
+      "id": "5.3.3.1.2",
+      "title": "faillock unlock_time: 0 или ≥900",
+      "page": 660,
+      "result": true,
+      "status": "PASS",
+      "evidence": "faillock.conf: unlock_time=900\npam_faillock present: True"
+    },
+    {
+      "id": "5.3.3.4.1",
+      "title": "pam_unix без nullok",
+      "page": 702,
+      "result": true,
+      "status": "PASS",
+      "evidence": "nullok absent; pam_unix in all five stacks: True"
+    },
+    {
+      "id": "6.2.1.1",
+      "title": "Установлены auditd и audispd-plugins",
+      "page": 816,
+      "result": true,
+      "status": "PASS",
+      "evidence": "auditd: install ok installed\naudispd-plugins: install ok installed"
+    },
+    {
+      "id": "6.2.1.2",
+      "title": "auditd включён и активен",
+      "page": 818,
+      "result": true,
+      "status": "PASS",
+      "evidence": "enabled=enabled; active=active"
+    },
+    {
+      "id": "6.2.3.1",
+      "title": "Аудит sudoers и sudoers.d",
+      "page": 838,
+      "result": true,
+      "status": "PASS",
+      "evidence": "loaded /etc/sudoers: -a always,exit -F arch=b64 -S open,bind,truncate,ftruncate,rename,mkdir,rmdir,creat,link,unlink,symlink,chmod,fchmod,chown,fchown,lchown,mknod,acct,swapon,quotactl,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,openat,mkdirat,mknodat,fchownat,unlinkat,renameat,linkat,symlinkat,fchmodat,fallocate,renameat2,openat2 -F path=/etc/sudoers -F perm=wa -F key=scope\npersistent /etc/sudoers: -a always,exit -F arch=b64 -F path=/etc/sudoers -F perm=wa -k scope\nloaded /etc/sudoers.d: -a always,exit -F arch=b64 -S open,bind,truncate,ftruncate,rename,mkdir,rmdir,creat,link,unlink,symlink,chmod,fchmod,chown,fchown,lchown,mknod,acct,swapon,quotactl,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,openat,mkdirat,mknodat,fchownat,unlinkat,renameat,linkat,symlinkat,fchmodat,fallocate,renameat2,openat2 -F dir=/etc/sudoers.d -F perm=wa -F key=scope\npersistent /etc/sudoers.d: -a always,exit -F arch=b64 -F dir=/etc/sudoers.d -F perm=wa -k scope"
+    },
+    {
+      "id": "6.2.3.12",
+      "title": "Аудит /etc/group",
+      "page": 871,
+      "result": true,
+      "status": "PASS",
+      "evidence": "loaded /etc/group: -a always,exit -F arch=b64 -S open,bind,truncate,ftruncate,rename,mkdir,rmdir,creat,link,unlink,symlink,chmod,fchmod,chown,fchown,lchown,mknod,acct,swapon,quotactl,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,openat,mkdirat,mknodat,fchownat,unlinkat,renameat,linkat,symlinkat,fchmodat,fallocate,renameat2,openat2 -F path=/etc/group -F perm=wa -F key=identity\npersistent /etc/group: -a always,exit -F arch=b64 -F path=/etc/group -F perm=wa -k identity"
+    },
+    {
+      "id": "6.2.3.13",
+      "title": "Аудит /etc/passwd",
+      "page": 874,
+      "result": true,
+      "status": "PASS",
+      "evidence": "loaded /etc/passwd: -a always,exit -F arch=b64 -S open,bind,truncate,ftruncate,rename,mkdir,rmdir,creat,link,unlink,symlink,chmod,fchmod,chown,fchown,lchown,mknod,acct,swapon,quotactl,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,openat,mkdirat,mknodat,fchownat,unlinkat,renameat,linkat,symlinkat,fchmodat,fallocate,renameat2,openat2 -F path=/etc/passwd -F perm=wa -F key=identity\npersistent /etc/passwd: -a always,exit -F arch=b64 -F path=/etc/passwd -F perm=wa -k identity"
+    },
+    {
+      "id": "6.2.3.14",
+      "title": "Аудит shadow и gshadow",
+      "page": 877,
+      "result": true,
+      "status": "PASS",
+      "evidence": "loaded /etc/shadow: -a always,exit -F arch=b64 -S open,bind,truncate,ftruncate,rename,mkdir,rmdir,creat,link,unlink,symlink,chmod,fchmod,chown,fchown,lchown,mknod,acct,swapon,quotactl,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,openat,mkdirat,mknodat,fchownat,unlinkat,renameat,linkat,symlinkat,fchmodat,fallocate,renameat2,openat2 -F path=/etc/shadow -F perm=wa -F key=identity\npersistent /etc/shadow: -a always,exit -F arch=b64 -F path=/etc/shadow -F perm=wa -k identity\nloaded /etc/gshadow: -a always,exit -F arch=b64 -S open,bind,truncate,ftruncate,rename,mkdir,rmdir,creat,link,unlink,symlink,chmod,fchmod,chown,fchown,lchown,mknod,acct,swapon,quotactl,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,openat,mkdirat,mknodat,fchownat,unlinkat,renameat,linkat,symlinkat,fchmodat,fallocate,renameat2,openat2 -F path=/etc/gshadow -F perm=wa -F key=identity\npersistent /etc/gshadow: -a always,exit -F arch=b64 -F path=/etc/gshadow -F perm=wa -k identity"
+    }
+  ]
+}
