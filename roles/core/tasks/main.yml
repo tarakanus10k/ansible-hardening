@@ -1,3 +1,0 @@
----
-- name: "Include core.yml"
-  ansible.builtin.import_tasks: "core.yml"
