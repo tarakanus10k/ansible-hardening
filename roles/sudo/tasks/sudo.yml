@@ -33,7 +33,7 @@
       when: discovered_sudo_timeout_files.stdout | length > 0
       ansible.builtin.replace:
         path: "{{ item }}"
-        regexp: 'timestamp_timeout=(\d+)'
+        regexp: 'timestamp_timeout=(-?\d+)'
         replace: "timestamp_timeout=5"
         validate: '/usr/sbin/visudo -cf %s'
       loop: "{{ discovered_sudo_timeout_files.stdout_lines }}"
