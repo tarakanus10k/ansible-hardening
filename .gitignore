@@ -1,16 +1,5 @@
 # obsidian
 /.obsidian
 
-# test tasks
-/roles/cis_baseline/*
-
-# old hosts versions
-/inventory/hosts.ini.old
-/inventory/hosts.yml.old
-
-# vault.yml
-/inventory/group_vars/linux_debian_13/debian-srv/vault.yml
-/inventory/host_vars/debian-srv/vault.yml
-
 # text dir
 /text
