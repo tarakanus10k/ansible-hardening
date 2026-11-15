@@ -1,0 +1,41 @@
+---
+# 5.2.1 Ensure sudo is installed
+# 5.2.6 Ensure sudo timestamp_timeout is configured
+
+- name: "5.2.1 Ensure sudo is installed"
+  when: deb13cis_rule_5_2_1
+  ansible.builtin.package:
+    name:
+      - sudo
+      - libsss-sudo
+    state: present
+
+- name: "5.2.6 Ensure sudo timestamp_timeout is configured"
+  when: deb13cis_rule_5_2_6
+  block:
+    - name: "5.2.6 | files with timestamp_timeout"
+      ansible.builtin.shell: |
+        set -o pipefail
+        grep -is 'timestamp_timeout' /etc/sudoers /etc/sudoers.d/* | cut -d":" -f1 | uniq | sort
+      args:
+        executable: "{{ deb13cis_shell_executable }}"
+      changed_when: false
+      failed_when: false
+      register: discovered_sudo_timeout_files
+
+    - name: "5.2.6 | change timestamp_timeout if == 0"
+      when: discovered_sudo_timeout_files.stdout | length == 0
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        regexp: 'Defaults timestamp_timeout='
+        line: "Defaults timestamp_timeout=5"
+        validate: '/usr/sbin/visudo -cf %s'
+
+    - name: "5.2.6 | change timestamp_timeout if >= 1"
+      when: discovered_sudo_timeout_files.stdout | length > 0
+      ansible.builtin.replace:
+        path: "{{ item }}"
+        regexp: 'timestamp_timeout=(\d+)'
+        replace: "timestamp_timeout=5"
+        validate: '/usr/sbin/visudo -cf %s'
+      loop: "{{ discovered_sudo_timeout_files.stdout_lines }}"
