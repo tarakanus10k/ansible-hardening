@@ -1,0 +1,88 @@
+---
+# 1.5.4 Ensure fs.suid_dumpable is configured
+# 1.5.10 Ensure core file size is configured
+# 1.5.11 Ensure systemd-coredump ProcessSizeMax is configured 
+# 1.5.12 Ensure systemd-coredump Storage is configured
+
+- name: "1.5.4 | PATCH | Ensure fs.suid_dumpable is configured"
+  when: deb13cis_rule_1_5_4
+  block:
+    - name: "1.5.4 | find existing config"
+      ansible.builtin.find:
+        path: /etc/sysctl.d
+        contains: fs.suid_dumpable\s*=\s*(?!0)\d
+      register: discovered_fs_suid_dumpable
+
+    - name: "1.5.4 | replace incorrect entries"
+      when:
+        - discovered_fs_suid_dumpable.files is defined
+        - item.path != '/etc/sysctl.d/60-fs_sysctl.conf'
+      ansible.builtin.replace:
+        path: "{{ item.path }}"
+        regexp: fs.suid_dumpable\s*=\s*\d*
+        replace: ""
+      loop: "{{ discovered_fs_suid_dumpable.files }}"
+
+    - name: "1.5.4 | Ensure fs.suid_dumpable is configured"
+      ansible.builtin.template:
+        src: etc/sysctl.d/60-fs_sysctl.conf.j2
+        dest: /etc/sysctl.d/60-fs_sysctl.conf
+        owner: root
+        group: root
+        mode: 0600
+      notify: Reload sysctl
+
+- name: "1.5.10 Ensure core file size is configured"
+  when: deb13cis_rule_1_5_10
+  ansible.builtin.lineinfile:
+    path: /etc/security/limits.d/60-limits.conf
+    regexp: '^\* hard core'
+    line: '* hard core 0'
+    create: true
+    owner: root
+    group: root
+    mode: 0600
+
+- name: "1.5.11 Ensure systemd-coredump ProcessSizeMax is configured "
+  when: deb13cis_rule_1_5_11
+  block:
+    - name: "1.5.11 | coredump.d directory exists"
+      ansible.builtin.file:
+        path: /etc/systemd/coredump.conf.d
+        owner: root
+        group: root
+        mode: 0700
+        state: directory
+
+    - name: "1.5.11 | add coredump conf"
+      ansible.builtin.lineinfile:
+        path: /etc/systemd/coredump.conf.d/60-coredump.conf
+        regexp: '^ProcessSizeMax'
+        line: 'ProcessSizeMax=0'
+        create: true
+        owner: root
+        group: root
+        mode: 0600
+      notify: Restart coredump
+
+- name: "1.5.12 Ensure systemd-coredump Storage is configured"
+  when: deb13cis_rule_1_5_12
+  block:
+    - name: "1.5.12 | coredump.d directory exists"
+      ansible.builtin.file:
+        path: /etc/systemd/coredump.conf.d
+        owner: root
+        group: root
+        mode: 0700
+        state: directory
+
+    - name: "1.5.12 | coredump.conf"
+      ansible.builtin.lineinfile:
+        path: /etc/systemd/coredump.conf
+        regexp: '^Storage'
+        line: 'Storage=none'
+        create: true
+        owner: root
+        group: root
+        mode: 0600
+      notify: Restart coredump
