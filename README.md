@@ -25,15 +25,15 @@ pipx install --include-deps ansible
 # импорт плейбука
 sudo apt install git # установка git
 git clone https://github.com/tarakanus10k/ansible-hardening.git
-cd ./ansible-hardening
-ansible-vault create ./inventory/host_vars/debian-srv/vault.yml # шифрованный файл для секретных переменных
-eval $(ssh-agent) && ssh-add ~/.ssh/ed25519_ansible_key
+ansible-vault create .ansible-hardening/inventory/host_vars/debian-srv/vault.yml
+
+# импорт плейбука (аудит)
+https://github.com/ansible-lockdown/DEBIAN13-CIS.git
 ```
 openscap:
 ```bash
 # установка
 sudo apt install openscap-scanner ssg-base ssg-debderived ssg-debian
-export SSH_ADDITIONAL_OPTIONS="-o StrictHostKeyChecking=accept-new"
 ```
 
 #### 2. Машина №2 (vmware: debian13)
@@ -48,18 +48,27 @@ sudo apt install openscap-scanner
 
 #### 3. Тесты
 ```bash
-# Проверка удаленного хоста с помощью openscap (до харденинга)
+# перед запуском
+export SSH_ADDITIONAL_OPTIONS="-o StrictHostKeyChecking=accept-new"
+eval $(ssh-agent) && ssh-add ~/.ssh/ed25519_ansible_key
+
+# АУДИТ (до)
+# OPENSCAP
 oscap-ssh --sudo srvadmin@192.168.100.10 22 xccdf eval \
-  --profile xccdf_org.ssgproject.content_profile_cis_level1_server \
-  --results before.xml --report before.html \
+  --profile xccdf_org.ssgproject.content_profile_cis_level2_server \
+  --results openscap-before.xml --report openscap-before.html \
   /usr/share/xml/scap/ssg/content/ssg-debian13-ds.xml
 
-# Запуск плейбука
-ansible-playbook playbooks/site.yml --diff --ask-vault-pass | tee ~/ansible-hardening/run-results.lo
+# Запуск плейбука (харденинг)
+ansible-playbook playbooks/site.yml --diff --ask-vault-pass | tee ~/ansible-hardening/tests/ansible-run01.log
 
-# Проверка удаленного хоста с помощью openscap (после харденинга)
+# АУДИТ (после)
+# OPENSCAP
 oscap-ssh --sudo srvadmin@192.168.100.10 22 xccdf eval \
-  --profile xccdf_org.ssgproject.content_profile_cis_level1_server \
-  --results after.xml --report after.html \
+  --profile xccdf_org.ssgproject.content_profile_cis_level2_server \
+  --results openscap-after.xml --report openscap-after.html \
   /usr/share/xml/scap/ssg/content/ssg-debian13-ds.xml
+  
+# Запуск плейбука (проверка на идемпотентность)
+ansible-playbook playbooks/site.yml --diff --ask-vault-pass | tee ~/ansible-hardening/tests/ansible-run02.log
 ```
