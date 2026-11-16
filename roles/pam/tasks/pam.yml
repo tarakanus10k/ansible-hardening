@@ -13,7 +13,7 @@
   when: deb13cis_rule_5_3_1_1
   ansible.builtin.package:
     name: libpam-runtime
-    state: latest
+    state: present
 
 # 5.3.2.1 Ensure pam_unix module is enabled
 - name: "5.3.2.1 Ensure pam_unix module is enabled"

@@ -1,4 +1,4 @@
 ---
 - name: "Update pam unix"
   ansible.builtin.command: pam-auth-update --enable unix
-  changed_when: true
+  changed_when: false
