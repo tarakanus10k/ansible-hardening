@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
-# CIS Debian 13 v1.1.0: 18 selected controls. Read-only configuration audit.
+# CIS Debian 13 v1.1.0: 20 selected controls. Read-only configuration audit.
 # Python 3 standard library is embedded for safe parsing and HTML/JSON output.
 set -euo pipefail
 export PATH=/usr/sbin:/usr/bin:/sbin:/bin
 command -v python3 >/dev/null || { echo 'Required: python3' >&2; exit 2; }
 export CIS_AUDIT_SCRIPT_PATH="${BASH_SOURCE[0]}"
 exec python3 - "$@" <<'PY'
-import argparse, ctypes, datetime, functools, glob, html, json, os, pathlib, re, shlex, socket, stat, subprocess, sys
+import argparse, ctypes, datetime, decimal, hashlib, functools, glob, html, json, os, pathlib, re, shlex, socket, stat, subprocess, sys
 P = pathlib.Path
-REPO = '2679b81f1659b58b2f0ca1bc61ec3fb767f55052'
+REPO = 'ff2b4a9d16a9b9c3e98e259cb4f5e19c2c834b49'
+AUDITOR_VERSION = '4.0'
 class AuditError(Exception): pass
 
 def run(*args):
@@ -113,6 +114,67 @@ def packages(names):
         value=run('dpkg-query','-W','-f=${Status}',name)
         out.append(f'{name}: {value}'); ok = ok and value=='install ok installed'
     return ok,'\n'.join(out)
+
+def installed_sudo():
+    evidence=[]; found=False
+    for name in ['sudo','sudo-rs']:
+        try:
+            p=subprocess.run(['dpkg-query','-W','-f=${Status}',name],text=True,
+                             stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=30,
+                             env={**os.environ,'LC_ALL':'C'})
+        except (OSError,subprocess.TimeoutExpired) as e: raise AuditError(str(e))
+        if p.returncode not in (0,1): raise AuditError('dpkg-query: '+p.stderr.strip())
+        ok=p.returncode==0 and p.stdout.strip()=='install ok installed'
+        found=found or ok
+        evidence.append(name+': '+(p.stdout.strip() or 'not installed'))
+    return found,'\n'.join(evidence)+'\nLocal sudoers policy; libsss-sudo/sssd are optional unless LDAP/SSSD sudo policy is required.'
+
+def evaluate_timeout(policy):
+    if not isinstance(policy,dict) or not isinstance(policy.get('Defaults',[]),list):
+        raise AuditError('Unexpected cvtsudoers JSON schema')
+    values=[]; evidence=[]; global_found=False
+    for entry in policy.get('Defaults',[]):
+        for option in entry.get('Options',[]):
+            if 'timestamp_timeout' not in option: continue
+            raw=option['timestamp_timeout']
+            if isinstance(raw,bool): raise AuditError('Non-numeric timestamp_timeout')
+            try: value=decimal.Decimal(str(raw))
+            except decimal.InvalidOperation: raise AuditError('Invalid timestamp_timeout: '+str(raw))
+            if not value.is_finite(): raise AuditError('Non-finite timestamp_timeout')
+            values.append(value)
+            binding=entry.get('Binding')
+            if not binding: global_found=True
+            evidence.append('timestamp_timeout='+str(raw)+' minutes; binding='+json.dumps(binding or 'global',ensure_ascii=False))
+    if not values: return False,'No explicit timestamp_timeout in parsed active sudoers policy (compiled defaults do not satisfy CIS 5.2.6)'
+    if not global_found:
+        return False,'\n'.join(evidence)+'\nOnly scoped settings found; universal explicit coverage is not demonstrated.'
+    ok=all(decimal.Decimal(0)<=v<=decimal.Decimal(15) for v in values)
+    return ok,'\n'.join(evidence)+'\nCIS range: 0..15 inclusive; all explicit scoped overrides checked.'
+
+def sudo_timeout():
+    installed,detail=installed_sudo()
+    if not installed: return False,detail
+    # Parse with sudo's own grammar, including nested includes, comments,
+    # continuation lines and ignored includedir backup files. No shell grep.
+    run('visudo','-c')
+    nss=lines(read('/etc/nsswitch.conf'))
+    for row in nss:
+        if row.startswith('sudoers:') and re.search(r'\b(sss|ldap)\b',row):
+            raise AuditError('External sudo policy requires a separate audit: '+row)
+    version=run('sudo','-V')
+    if 'sudo-rs' in version.lower():
+        raise AuditError('sudo-rs found: implementation-specific timeout verification required; classic sudo parser is not authoritative')
+    cmd=['cvtsudoers','-c','/dev/null','-i','sudoers','-f','json','-d','all','-s','aliases,privileges','/etc/sudoers']
+    try:
+        parsed=subprocess.run(cmd,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=30,
+                              env={**os.environ,'LC_ALL':'C'})
+    except (OSError,subprocess.TimeoutExpired) as e: raise AuditError(str(e))
+    if parsed.returncode or parsed.stderr.strip():
+        raise AuditError('cvtsudoers did not parse the policy cleanly: '+parsed.stderr.strip())
+    policy=json.loads(parsed.stdout) if parsed.stdout.strip() else {}
+    ok,evidence=evaluate_timeout(policy)
+    return ok,evidence+'\nvisudo syntax: OK; parsed by cvtsudoers. No sudo authentication attempts performed.'
+
 def pam_latest():
     ok,detail=packages(['libpam-runtime'])
     installed=run('dpkg-query','-W','-f=${Version}','libpam-runtime')
@@ -235,6 +297,8 @@ def checks(contexts):
       ('5.1.18','MaxAuthTries: не более 4',602,lambda:ssh_value('maxauthtries',lambda v:v.isdigit() and 0<=int(v)<=4,contexts)),
       ('5.1.21','PermitEmptyPasswords: no',608,lambda:ssh_value('permitemptypasswords',lambda v:v=='no',contexts)),
       ('5.1.22','PermitRootLogin: no',610,lambda:ssh_value('permitrootlogin',lambda v:v=='no',contexts)),
+      ('5.2.1','Установлен sudo или sudo-rs',618,installed_sudo),
+      ('5.2.6','sudo timestamp_timeout: явно задан, 0–15 минут',631,sudo_timeout),
       ('5.3.1.1','Актуальность libpam-runtime',636,pam_latest),
       ('5.3.2.1','pam_unix включён',645,pam_unix),
       ('5.3.2.2','pam_faillock включён',647,pam_faillock),
@@ -257,7 +321,7 @@ def render(report):
         body+=f'<tr data-result="{val}"><td><strong>{esc(r["id"])}</strong><small>PDF · стр. {r["page"]}</small></td><td>{esc(r["title"])}</td><td><span class="badge {val}">{val}</span><small>{esc(r["status"])}</small></td><td><details><summary>Доказательства</summary><pre>{esc(r["evidence"])}</pre></details></td></tr>'
     return '''<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CIS Debian 13 · аудит</title><style>
     *{box-sizing:border-box}body{margin:0;background:#f1f5f9;color:#172a40;font:15px/1.6 system-ui,sans-serif}main{max-width:1250px;margin:auto;padding:36px 24px}header{background:#10283e;color:white;padding:32px;border-radius:18px}h1{font-size:30px;margin:8px 0}header p{color:#cbd5e1;margin:4px 0}.eyebrow{letter-spacing:2px;font-size:12px;color:#7dd3fc}.cards{display:flex;gap:16px;margin:22px 0}.card{background:white;border:1px solid #dae3ec;border-radius:14px;padding:18px 26px;flex:1}.card b{display:block;font-size:32px}.card span,small{color:#64748b}small{display:block;font-size:12px}.notice{border-left:4px solid #0284c7;background:#e0f2fe;padding:15px 20px;margin:20px 0}button{background:white;border:1px solid #bdcbd9;border-radius:8px;padding:9px 16px;margin:0 8px 16px 0;cursor:pointer}button:hover{background:#dbeafe}.table{overflow:auto;border-radius:12px;background:white}table{border-collapse:collapse;width:100%;min-width:750px}th{text-align:left;background:#e2e8f0;padding:14px}td{padding:15px;border-top:1px solid #e2e8f0;vertical-align:top}td:nth-child(1){width:135px}td:nth-child(2){width:32%}.badge{padding:4px 12px;border-radius:20px;font-weight:700}.true{color:#166534;background:#dcfce7}.false{color:#991b1b;background:#fee2e2}summary{cursor:pointer;color:#0369a1}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;max-width:550px}footer{margin-top:22px;color:#64748b;font-size:12px}@media print{button{display:none}main{padding:0}details pre{display:block}.table{overflow:visible}header{color:black;background:white}}
-    </style><main><header><div class="eyebrow">CONFIGURATION AUDIT · SELECTED CONTROLS</div><h1>CIS Debian Linux 13 · v1.1.0</h1><p>'''+esc(report['host'])+' · '+esc(report['timestamp'])+'''</p><p>SSH / PAM / auditd · 18 правил проекта</p></header><div class="cards">'''+cards+'''</div><div class="notice">true — проверка пройдена. false — несоответствие либо проверка не подтверждена (ERROR / REVIEW). Это выборочный аудит, не сертификация CIS и не функциональный тест атак. Параметры SSH проверяются на диске, auditd — также в ядре. Актуальность PAM определяется по локальному кэшу APT.</div><button onclick="filterRows('all')">Все</button><button onclick="filterRows('false')">Только false</button><button onclick="filterRows('true')">Только true</button><div class="table"><table><thead><tr><th>CIS</th><th>Проверка</th><th>Результат</th><th>Обоснование</th></tr></thead><tbody>'''+body+'''</tbody></table></div><footer>Основание: предоставленный CIS Debian Linux 13 Benchmark v1.1.0, 26.08.2026. Номера страниц печатные.<br>Срез репозитория: '''+REPO+'''<br>Независимый учебный скрипт; не официальный продукт CIS.</footer></main><script>function filterRows(v){document.querySelectorAll('tbody tr').forEach(r=>r.hidden=v!=='all'&&r.dataset.result!==v)}</script></html>'''
+    </style><main><header><div class="eyebrow">CONFIGURATION AUDIT · SELECTED CONTROLS</div><h1>CIS Debian Linux 13 · v1.1.0</h1><p>'''+esc(report['host'])+' · '+esc(report['timestamp'])+'''</p><p>SSH / PAM / sudo / auditd · 20 правил проекта</p></header><div class="cards">'''+cards+'''</div><div class="notice">true — проверка пройдена. false — несоответствие либо проверка не подтверждена (ERROR / REVIEW). Это выборочный аудит, не сертификация CIS и не функциональный тест атак. Параметры SSH проверяются на диске, auditd — также в ядре. Актуальность PAM определяется по локальному кэшу APT.</div><button onclick="filterRows('all')">Все</button><button onclick="filterRows('false')">Только false</button><button onclick="filterRows('true')">Только true</button><div class="table"><table><thead><tr><th>CIS</th><th>Проверка</th><th>Результат</th><th>Обоснование</th></tr></thead><tbody>'''+body+'''</tbody></table></div><footer>Основание: предоставленный CIS Debian Linux 13 Benchmark v1.1.0, 26.08.2026. Номера страниц печатные.<br>Эталон покрытия (не версия, обнаруженная на сервере): '''+REPO+'''<br>Независимый учебный скрипт; не официальный продукт CIS.</footer></main><script>function filterRows(v){document.querySelectorAll('tbody tr').forEach(r=>r.hidden=v!=='all'&&r.dataset.result!==v)}</script></html>'''
 
 
 def remote_audit(args):
@@ -319,8 +383,11 @@ def remote_audit(args):
             if p.returncode: raise AuditError(f'Download failed: {name}; partial local directory retained')
             (dest/name).chmod(0o600)
         data=json.loads((dest/'report.json').read_text())
-        if len(data.get('results',[]))!=18 or any(type(r.get('result')) is not bool for r in data['results']):
-            raise AuditError('Downloaded JSON is not a complete 18-rule report')
+        expected_ids={item[0] for item in checks([])}
+        if (len(data.get('results',[]))!=len(expected_ids) or
+            {r.get('id') for r in data['results']}!=expected_ids or
+            any(type(r.get('result')) is not bool for r in data['results'])):
+            raise AuditError('Downloaded JSON does not match the expected control set')
         print(f'Downloaded: {dest}/report.html and report.json',file=sys.stderr)
         # Delete only the known files created by this run, after both downloads.
         cleanup='rm -f -- '+shlex.join([uploaded,reports+'/report.html',reports+'/report.json'])
@@ -333,7 +400,7 @@ def remote_audit(args):
         raise
 
 def main():
-    ap=argparse.ArgumentParser(description='Read-only audit of 18 project controls, CIS Debian 13 v1.1.0. Requires root and Python 3.')
+    ap=argparse.ArgumentParser(description='Read-only audit of 20 project controls, CIS Debian 13 v1.1.0. Requires root and Python 3.')
     ap.add_argument('--remote',help='SSH config alias or user@host; downloads reports to the local output directory')
     ap.add_argument('--port',type=int,help='SSH port')
     ap.add_argument('--identity',help='Path to SSH private key on the local machine')
@@ -359,7 +426,10 @@ def main():
             ok=False; evidence=str(e); status='ERROR / REVIEW'
         results.append(dict(id=ident,title=title,page=page,result=bool(ok),status=status,evidence=evidence))
         print(f'{ident}\t{str(bool(ok)).lower()}\t{status}',flush=True)
-    report=dict(benchmark='CIS Debian Linux 13 v1.1.0',repository_commit=REPO,host=socket.gethostname(),
+    script_path=P(os.environ.get('CIS_AUDIT_SCRIPT_PATH',''))
+    script_sha256=hashlib.sha256(script_path.read_bytes()).hexdigest() if script_path.is_file() else None
+    report=dict(benchmark='CIS Debian Linux 13 v1.1.0',reference_repository_commit=REPO,
+                auditor_version=AUDITOR_VERSION,auditor_sha256=script_sha256,host=socket.gethostname(),
                 timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),results=results)
     (dest/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
     (dest/'report.html').write_text(render(report))
