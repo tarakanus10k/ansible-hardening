@@ -56,7 +56,7 @@
         path: "{{ item.path }}"
         regexp: '(*.pam_faillock.so\s*)deny\s*=\s*\d+\b(.*)'
         replace: \1\2
-      loop: "{{ prelim_pam_conf_files.files }}"
+      loop: "{{ discovered_faillock_deny_files.files }}"
 
     - name: "5.3.3.1.1 | edit /etc/security/faillock.conf"
       ansible.builtin.lineinfile:
@@ -87,7 +87,7 @@
         path: "{{ item.path }}"
         regexp: '(*.pam_faillock.so\s*)unlock_time\s*=\s*\b(.*)'
         replace: \1\2
-      loop: "{{ prelim_pam_conf_files.files }}"
+      loop: "{{ discovered_faillock_unlock_files.files }}"
 
     - name: "5.3.3.1.2 | edit /etc/security/faillock.conf"
       ansible.builtin.lineinfile:
