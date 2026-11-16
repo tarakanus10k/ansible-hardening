@@ -17,6 +17,8 @@
       ansible.builtin.shell: |
         set -o pipefail
         grep -is 'timestamp_timeout' /etc/sudoers /etc/sudoers.d/* | cut -d":" -f1 | uniq | sort
+      args:
+        executable: /bin/bash
       changed_when: false
       failed_when: false
       register: discovered_sudo_timeout_files
