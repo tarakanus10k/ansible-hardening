@@ -1,6 +1,6 @@
 АУДИТ CIS Debian Linux 13 Benchmark v1.1.0
 Хост: debian-srv
-Время: 2026-11-16T23:01:40+03:00
+Время: 2026-11-17T00:13:12+03:00
 Версия скрипта: 5.0-bash
 Состав проверок по коммиту: f73582a416ba21067ef943f1bcb820e966029e8c
 SHA256 скрипта: 52278075017656142c99071d0f2b53fdc5df39b5f60bc7239e7b37ce660fc8b4
@@ -65,12 +65,11 @@ true = PASS. false = FAIL (нарушение), REVIEW (не доказано), 
 --------------------------------------------------------------------------
 
 [5.2.6] timestamp_timeout явно задан: 0–15 минут
-Результат: false | Статус: REVIEW | Страница CIS: 631
+Результат: true | Статус: PASS | Страница CIS: 631
   sudo: install ok installed
   sudo-rs: dpkg-query: no packages found matching sudo-rs
   Активная настройка:  timestamp_timeout=5
   Синтаксис проверен visudo; учтены активные include через cvtsudoers.
-  nsswitch включает sss/ldap: локальная политика проверена, внешняя не проверена.
 --------------------------------------------------------------------------
 
 [5.3.1.1] Установлена актуальная версия libpam-runtime
@@ -153,4 +152,4 @@ true = PASS. false = FAIL (нарушение), REVIEW (не доказано), 
   loaded: -w /etc/gshadow -p wa
 --------------------------------------------------------------------------
 
-ИТОГО: 20; true: 19; false: 1; FAIL: 0; REVIEW: 1; ERROR: 0
+ИТОГО: 20; true: 20; false: 0; FAIL: 0; REVIEW: 0; ERROR: 0
