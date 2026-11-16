@@ -6,6 +6,9 @@
 # 6.2.3.13 Ensure events that modify /etc/passwd information are collected
 # 6.2.3.14 Ensure events that modify /etc/shadow and /etc/gshadow are collected
 
+# ---
+
+# 6.2.1.1 Ensure auditd packages are installed
 - name: "6.2.1.1 Ensure auditd packages are installed"
   when: deb13cis_rule_6_2_1_1
   ansible.builtin.package:
@@ -14,6 +17,7 @@
       - audispd-plugins
     state: present 
 
+# 6.2.1.2 Ensure auditd service is enabled and active
 - name: "6.2.1.2 Ensure auditd service is enabled and active"
   when: deb13cis_rule_6_2_1_2
   ansible.builtin.systemd_service:
@@ -22,21 +26,25 @@
     state: started
     masked: false
 
+# 6.2.3.1 Ensure modification of the /etc/sudoers file is collected
 - name: "6.2.3.1 Ensure modification of the /etc/sudoers file is collected"
   when: deb13cis_rule_6_2_3_1
   ansible.builtin.set_fact:
     update_audit_template: true
 
+# 6.2.3.12 Ensure events that modify /etc/group information are collected
 - name: "6.2.3.12 Ensure events that modify /etc/group information are collected"
   when: deb13cis_rule_6_2_3_12
   ansible.builtin.set_fact:
     update_audit_template: true
 
+# 6.2.3.13 Ensure events that modify /etc/passwd information are collected
 - name: "6.2.3.13 Ensure events that modify /etc/passwd information are collected"
   when: deb13cis_rule_6_2_3_13
   ansible.builtin.set_fact:
     update_audit_template: true
 
+# 6.2.3.14 Ensure events that modify /etc/shadow and /etc/gshadow are collected
 - name: "6.2.3.14 Ensure events that modify /etc/shadow and /etc/gshadow are collected"
   when: deb13cis_rule_6_2_3_14
   ansible.builtin.set_fact:
