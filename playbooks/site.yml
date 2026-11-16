@@ -8,3 +8,4 @@
     - pam
     - sudo
     - audit
+    - apparmor
