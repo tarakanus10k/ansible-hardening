@@ -1,0 +1,3 @@
+---
+- name: "Include apparmor.yml"
+  ansible.builtin.import_tasks: apparmor.yml
