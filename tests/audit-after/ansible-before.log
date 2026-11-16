@@ -102,7 +102,7 @@ changed: [debian-srv]
 
 TASK [pam : 5.3.2.2 Ensure pam_faillock module is enabled] *********************
 --- before
-+++ after: /home/ansibleuser/.ansible/tmp/ansible-local-629sqe3iwag/tmpsf7axcza/faillock.j2
++++ after: /home/ansibleuser/.ansible/tmp/ansible-local-49585g3b8ge/tmpdey4zu7l/faillock.j2
 @@ -0,0 +1,6 @@
 +Name: Enable pam_faillock to deny access
 +Default: yes
@@ -114,7 +114,7 @@ TASK [pam : 5.3.2.2 Ensure pam_faillock module is enabled] *********************
 
 changed: [debian-srv] => (item=faillock)
 --- before
-+++ after: /home/ansibleuser/.ansible/tmp/ansible-local-629sqe3iwag/tmprtmboeci/faillock_notify.j2
++++ after: /home/ansibleuser/.ansible/tmp/ansible-local-49585g3b8ge/tmpvk3i2xtk/faillock_notify.j2
 @@ -0,0 +1,9 @@
 +Name: Notify of failed login attempts and reset count upon success
 +Default: yes
@@ -180,6 +180,31 @@ TASK [pam : 5.3.3.4.1 | delete nullok] *****************************************
 
 changed: [debian-srv] => (item=/usr/share/pam-configs/unix)
 
+TASK [sudo : 5.2.1 Ensure sudo is installed] ***********************************
+The following additional packages will be installed:
+  libnss-sudo
+The following NEW packages will be installed:
+  libnss-sudo libsss-sudo
+0 upgraded, 2 newly installed, 0 to remove and 0 not upgraded.
+changed: [debian-srv]
+
+TASK [sudo : 5.2.6 | files with timestamp_timeout] *****************************
+ok: [debian-srv]
+
+TASK [sudo : 5.2.6 | change timestamp_timeout if == 0] *************************
+--- before: /etc/sudoers (content)
++++ after: /etc/sudoers (content)
+@@ -52,3 +52,4 @@
+ # See sudoers(5) for more information on "@include" directives:
+ 
+ @includedir /etc/sudoers.d
++Defaults timestamp_timeout=5
+
+changed: [debian-srv]
+
+TASK [sudo : 5.2.6 | change timestamp_timeout if >= 1] *************************
+skipping: [debian-srv]
+
 TASK [audit : 6.2.1.1 Ensure auditd packages are installed] ********************
 The following additional packages will be installed:
   libauparse0t64
@@ -205,23 +230,27 @@ ok: [debian-srv]
 
 TASK [audit : Deploy auditd rules] *********************************************
 --- before
-+++ after: /home/ansibleuser/.ansible/tmp/ansible-local-629sqe3iwag/tmpxh7_qzec/50-identity.rules.j2
-@@ -0,0 +1,7 @@
++++ after: /home/ansibleuser/.ansible/tmp/ansible-local-49585g3b8ge/tmpgk0dft9b/50-identity.rules.j2
+@@ -0,0 +1,11 @@
 +# 6.2.3.12 Ensure events that modify /etc/group information are collected
 +-a always,exit -F arch=b64 -F path=/etc/group -F perm=wa -k identity
++-a always,exit -F arch=b32 -F path=/etc/group -F perm=wa -k identity
 +# 6.2.3.13 Ensure events that modify /etc/passwd information are collected
 +-a always,exit -F arch=b64 -F path=/etc/passwd -F perm=wa -k identity
++-a always,exit -F arch=b32 -F path=/etc/passwd -F perm=wa -k identity
 +# 6.2.3.14 Ensure events that modify /etc/shadow and /etc/gshadow are collected
 +-a always,exit -F arch=b64 -F path=/etc/gshadow -F perm=wa -k identity
 +-a always,exit -F arch=b64 -F path=/etc/shadow -F perm=wa -k identity
++-a always,exit -F arch=b32 -F path=/etc/gshadow -F perm=wa -k identity
++-a always,exit -F arch=b32 -F path=/etc/shadow -F perm=wa -k identity
 
 changed: [debian-srv] => (item=50-identity)
 --- before
-+++ after: /home/ansibleuser/.ansible/tmp/ansible-local-629sqe3iwag/tmp0to5nwe5/50-scope.rules.j2
++++ after: /home/ansibleuser/.ansible/tmp/ansible-local-49585g3b8ge/tmpf27versb/50-scope.rules.j2
 @@ -0,0 +1,3 @@
 +# 6.2.3.1 Ensure modification of the /etc/sudoers file is collected
-+-a always,exit -F arch=b64 -F path=/etc/sudoers -F perm=wa -k scope
-+-a always,exit -F arch=b64 -F dir=/etc/sudoers.d -F perm=wa -k scope
++-a always,exit -F arch=b32 -C euid!=uid -F auid!=unset -S execve,execveat -k user_emulation
++-a always,exit -F arch=b64 -C euid!=uid -F auid!=unset -S execve,execveat -k user_emulation
 
 changed: [debian-srv] => (item=50-scope)
 
@@ -241,5 +270,5 @@ RUNNING HANDLER [audit : Load auditd rules] ************************************
 ok: [debian-srv]
 
 PLAY RECAP *********************************************************************
-debian-srv                 : ok=27   changed=17   unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+debian-srv                 : ok=30   changed=19   unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
 

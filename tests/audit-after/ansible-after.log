@@ -1,0 +1,89 @@
+
+PLAY [Linux Debian 13 hardening] ***********************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [debian-srv]
+
+TASK [ssh : 5.1.1 Ensure access to /etc/ssh/sshd_config is configured] *********
+ok: [debian-srv]
+
+TASK [ssh : 5.1.2 | for dir] ***************************************************
+ok: [debian-srv]
+
+TASK [ssh : 5.1.2 | filelist in sshd_config.d/] ********************************
+ok: [debian-srv]
+
+TASK [ssh : 5.1.2 | for files in dir] ******************************************
+skipping: [debian-srv]
+
+TASK [ssh : 5.1.15 Ensure sshd LoginGraceTime is configured] *******************
+ok: [debian-srv]
+
+TASK [ssh : 5.1.18 Ensure sshd MaxAuthTries is configured] *********************
+ok: [debian-srv]
+
+TASK [ssh : 5.1.21 Ensure sshd PermitEmptyPasswords is disabled] ***************
+ok: [debian-srv]
+
+TASK [ssh : 5.1.22 Ensure sshd PermitRootLogin is disabled] ********************
+ok: [debian-srv]
+
+TASK [pam : 5.3.1.1 Ensure latest version of pam is installed] *****************
+ok: [debian-srv]
+
+TASK [pam : 5.3.2.1 Ensure pam_unix module is enabled] *************************
+changed: [debian-srv]
+
+TASK [pam : 5.3.2.2 Ensure pam_faillock module is enabled] *********************
+ok: [debian-srv] => (item=faillock)
+ok: [debian-srv] => (item=faillock_notify)
+
+TASK [pam : 5.3.3.1.1 Ensure password failed attempts lockout is configured] ***
+ok: [debian-srv]
+
+TASK [pam : 5.3.3.1.2 Ensure password unlock time is configured] ***************
+ok: [debian-srv]
+
+TASK [pam : 5.3.3.4.1 | filelist in pam-configs] *******************************
+ok: [debian-srv]
+
+TASK [pam : 5.3.3.4.1 | delete nullok] *****************************************
+skipping: [debian-srv]
+
+TASK [sudo : 5.2.1 Ensure sudo is installed] ***********************************
+ok: [debian-srv]
+
+TASK [sudo : 5.2.6 | files with timestamp_timeout] *****************************
+ok: [debian-srv]
+
+TASK [sudo : 5.2.6 | change timestamp_timeout if == 0] *************************
+skipping: [debian-srv]
+
+TASK [sudo : 5.2.6 | change timestamp_timeout if >= 1] *************************
+ok: [debian-srv] => (item=/etc/sudoers)
+
+TASK [audit : 6.2.1.1 Ensure auditd packages are installed] ********************
+ok: [debian-srv]
+
+TASK [audit : 6.2.1.2 Ensure auditd service is enabled and active] *************
+ok: [debian-srv]
+
+TASK [audit : 6.2.3.1 Ensure modification of the /etc/sudoers file is collected] ***
+ok: [debian-srv]
+
+TASK [audit : 6.2.3.12 Ensure events that modify /etc/group information are collected] ***
+ok: [debian-srv]
+
+TASK [audit : 6.2.3.13 Ensure events that modify /etc/passwd information are collected] ***
+ok: [debian-srv]
+
+TASK [audit : 6.2.3.14 Ensure events that modify /etc/shadow and /etc/gshadow are collected] ***
+ok: [debian-srv]
+
+TASK [audit : Deploy auditd rules] *********************************************
+ok: [debian-srv] => (item=50-identity)
+ok: [debian-srv] => (item=50-scope)
+
+PLAY RECAP *********************************************************************
+debian-srv                 : ok=24   changed=1    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+

@@ -1,8 +1,10 @@
 {
   "benchmark": "CIS Debian Linux 13 v1.1.0",
-  "repository_commit": "2679b81f1659b58b2f0ca1bc61ec3fb767f55052",
+  "reference_repository_commit": "ff2b4a9d16a9b9c3e98e259cb4f5e19c2c834b49",
+  "auditor_version": "4.0",
+  "auditor_sha256": "48cb0154bd1cf611cca566ce3fac225a171ca0b0efbf86ee902b9cddbd1089c5",
   "host": "debian-srv",
-  "timestamp": "2026-11-15T12:18:01.874691+00:00",
+  "timestamp": "2026-11-16T11:52:08.970838+00:00",
   "results": [
     {
       "id": "5.1.1",
@@ -51,6 +53,22 @@
       "result": true,
       "status": "PASS",
       "evidence": "global: permitrootlogin=no\nsshd -T reads disk configuration; it does not prove the running daemon reloaded it."
+    },
+    {
+      "id": "5.2.1",
+      "title": "Установлен sudo или sudo-rs",
+      "page": 618,
+      "result": true,
+      "status": "PASS",
+      "evidence": "sudo: install ok installed\nsudo-rs: not installed\nLocal sudoers policy; libsss-sudo/sssd are optional unless LDAP/SSSD sudo policy is required."
+    },
+    {
+      "id": "5.2.6",
+      "title": "sudo timestamp_timeout: явно задан, 0–15 минут",
+      "page": 631,
+      "result": false,
+      "status": "ERROR / REVIEW",
+      "evidence": "External sudo policy requires a separate audit: sudoers: files  sss"
     },
     {
       "id": "5.3.1.1",
@@ -120,9 +138,9 @@
       "id": "6.2.3.1",
       "title": "Аудит sudoers и sudoers.d",
       "page": 838,
-      "result": true,
-      "status": "PASS",
-      "evidence": "loaded /etc/sudoers: -a always,exit -F arch=b64 -S open,bind,truncate,ftruncate,rename,mkdir,rmdir,creat,link,unlink,symlink,chmod,fchmod,chown,fchown,lchown,mknod,acct,swapon,quotactl,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,openat,mkdirat,mknodat,fchownat,unlinkat,renameat,linkat,symlinkat,fchmodat,fallocate,renameat2,openat2 -F path=/etc/sudoers -F perm=wa -F key=scope\npersistent /etc/sudoers: -a always,exit -F arch=b64 -F path=/etc/sudoers -F perm=wa -k scope\nloaded /etc/sudoers.d: -a always,exit -F arch=b64 -S open,bind,truncate,ftruncate,rename,mkdir,rmdir,creat,link,unlink,symlink,chmod,fchmod,chown,fchown,lchown,mknod,acct,swapon,quotactl,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,openat,mkdirat,mknodat,fchownat,unlinkat,renameat,linkat,symlinkat,fchmodat,fallocate,renameat2,openat2 -F dir=/etc/sudoers.d -F perm=wa -F key=scope\npersistent /etc/sudoers.d: -a always,exit -F arch=b64 -F dir=/etc/sudoers.d -F perm=wa -k scope"
+      "result": false,
+      "status": "FAIL",
+      "evidence": "loaded /etc/sudoers: MISSING compliant syscall rule\nCandidate lines: (none)\npersistent /etc/sudoers: MISSING compliant syscall rule\nCandidate lines: (none)\nloaded /etc/sudoers.d: MISSING compliant syscall rule\nCandidate lines: (none)\npersistent /etc/sudoers.d: MISSING compliant syscall rule\nCandidate lines: (none)"
     },
     {
       "id": "6.2.3.12",
