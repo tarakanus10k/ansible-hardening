@@ -13,12 +13,15 @@
   when: deb13cis_rule_5_3_1_1
   ansible.builtin.package:
     name: libpam-runtime
-    state: present
+    state: latest
+    update_cache: true
+    cache_valid_time: 3600
 
 # 5.3.2.1 Ensure pam_unix module is enabled
 - name: "5.3.2.1 Ensure pam_unix module is enabled"
   when: deb13cis_rule_5_3_2_1
   ansible.builtin.command: pam-auth-update --enable unix
+  changed_when: false
 
 # 5.3.3.4.1 Ensure pam_unix does not include nullok
 - name: "5.3.3.4.1 Ensure pam_unix does not include nullok"

@@ -10,7 +10,6 @@
   ansible.builtin.package:
     name:
       - sudo
-      - libsss-sudo
     state: present
 
 # 5.2.6 Ensure sudo timestamp_timeout is configured
@@ -31,7 +30,7 @@
       when: discovered_sudo_timeout_files.stdout | length == 0
       ansible.builtin.lineinfile:
         path: /etc/sudoers
-        regexp: 'Defaults timestamp_timeout='
+        regexp: '^Defaults timestamp_timeout='
         line: "Defaults timestamp_timeout=5"
         validate: '/usr/sbin/visudo -cf %s'
 
@@ -39,7 +38,7 @@
       when: discovered_sudo_timeout_files.stdout | length > 0
       ansible.builtin.replace:
         path: "{{ item }}"
-        regexp: 'timestamp_timeout=(-?\d+)'
-        replace: "timestamp_timeout=5"
+        regexp: '^([ \t]*Defaults[^#\n]*timestamp_timeout[ \t]*=[ \t]*)-?[0-9.]+'
+        replace: '\g<1>5'
         validate: '/usr/sbin/visudo -cf %s'
       loop: "{{ discovered_sudo_timeout_files.stdout_lines }}"
