@@ -9,7 +9,7 @@
 
 # 5.1.1-2 Ensure access to /etc/ssh/sshd_config is configured
 - name: "5.1.1 Ensure access to /etc/ssh/sshd_config is configured"
-  when: deb13cis_rule_5_1_1-2
+  when: deb13cis_rule_5_1_1_2
   block:
     - name: "5.1.1 | /etc/ssh/sshd_config"
       ansible.builtin.file:
@@ -23,7 +23,7 @@
         path: "/etc/ssh/sshd_config.d/"
         owner: root
         group: root
-        mode: 0600
+        mode: 0700
 
     - name: "5.1.2 | find /etc/ssh/sshd_config.d/*.conf"
       ansible.builtin.find:
