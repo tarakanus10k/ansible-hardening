@@ -1,15 +1,15 @@
 ---
-# 5.1.1 Ensure access to /etc/ssh/sshd_config is configured
-# 5.1.14 Ensure sshd LoginGraceTime is configured
-# 5.1.17 Ensure sshd MaxAuthTries is configured
-# 5.1.20 Ensure sshd PermitEmptyPasswords is disabled 
-# 5.1.21 Ensure sshd PermitRootLogin is disabled
+# 5.1.1-2 Ensure access to /etc/ssh/sshd_config is configured
+# 5.1.15 Ensure sshd LoginGraceTime is configured
+# 5.1.18 Ensure sshd MaxAuthTries is configured
+# 5.1.21 Ensure sshd PermitEmptyPasswords is disabled
+# 5.1.22 Ensure sshd PermitRootLogin is disabled
 
 # ---
 
-# 5.1.1 Ensure access to /etc/ssh/sshd_config is configured
+# 5.1.1-2 Ensure access to /etc/ssh/sshd_config is configured
 - name: "5.1.1 Ensure access to /etc/ssh/sshd_config is configured"
-  when: deb13cis_rule_5_1_1
+  when: deb13cis_rule_5_1_1-2
   block:
     - name: "5.1.1 | /etc/ssh/sshd_config"
       ansible.builtin.file:
@@ -18,20 +18,20 @@
         group: root
         mode: 0600
 
-    - name: "5.1.1 | /etc/ssh/sshd_config.d/"
+    - name: "5.1.2 | /etc/ssh/sshd_config.d/"
       ansible.builtin.file:
         path: "/etc/ssh/sshd_config.d/"
         owner: root
         group: root
         mode: 0600
 
-    - name: "5.1.1 | find /etc/ssh/sshd_config.d/*.conf"
+    - name: "5.1.2 | find /etc/ssh/sshd_config.d/*.conf"
       ansible.builtin.find:
         paths: /etc/ssh/sshd_config.d/
         file_type: file
       register: sshd_config_files
 
-    - name: "5.1.1 | /etc/ssh/sshd_config.d/*.conf"
+    - name: "5.1.2 | /etc/ssh/sshd_config.d/*.conf"
       ansible.builtin.file:
         path: "{{ item.path }}"
         owner: root
@@ -39,9 +39,9 @@
         mode: 0600
       loop: "{{ sshd_config_files.files }}"
 
-# 5.1.14 Ensure sshd LoginGraceTime is configured
-- name: "5.1.14 Ensure sshd LoginGraceTime is configured"
-  when: deb13cis_rule_5_1_14
+# 5.1.15 Ensure sshd LoginGraceTime is configured
+- name: "5.1.15 Ensure sshd LoginGraceTime is configured"
+  when: deb13cis_rule_5_1_15
   notify: Restart sshd
   ansible.builtin.lineinfile:
     path: "/etc/ssh/sshd_config"
@@ -49,9 +49,9 @@
     line: "LoginGraceTime 60"
     validate: sshd -t -f %s
 
-# 5.1.17 Ensure sshd MaxAuthTries is configured
-- name: "5.1.17 Ensure sshd MaxAuthTries is configured"
-  when: deb13cis_rule_5_1_17
+# 5.1.18 Ensure sshd MaxAuthTries is configured
+- name: "5.1.18 Ensure sshd MaxAuthTries is configured"
+  when: deb13cis_rule_5_1_18
   notify: Restart sshd
   ansible.builtin.lineinfile:
     path: "/etc/ssh/sshd_config"
@@ -59,9 +59,9 @@
     line: "MaxAuthTries 4"
     validate: sshd -t -f %s
 
-# 5.1.20 Ensure sshd PermitEmptyPasswords is disabled 
-- name: "5.1.20 Ensure sshd PermitEmptyPasswords is disabled"
-  when: deb13cis_rule_5_1_20
+# 5.1.21 Ensure sshd PermitEmptyPasswords is disabled
+- name: "5.1.21 Ensure sshd PermitEmptyPasswords is disabled"
+  when: deb13cis_rule_5_1_21
   notify: Restart sshd
   ansible.builtin.lineinfile:
     path: "/etc/ssh/sshd_config"
@@ -69,9 +69,9 @@
     line: 'PermitEmptyPasswords no'
     validate: sshd -t -f %s
 
-# 5.1.21 Ensure sshd PermitRootLogin is disabled
-- name: "5.1.21 Ensure sshd PermitRootLogin is disabled"
-  when: deb13cis_rule_5_1_21
+# 5.1.22 Ensure sshd PermitRootLogin is disabled
+- name: "5.1.22 Ensure sshd PermitRootLogin is disabled"
+  when: deb13cis_rule_5_1_22
   notify: Restart sshd
   ansible.builtin.lineinfile:
     path: "/etc/ssh/sshd_config"
