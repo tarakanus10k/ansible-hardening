@@ -177,7 +177,7 @@ ok: [debian-srv]
 
 TASK [audit : Deploy auditd rules] *********************************************
 --- before
-+++ after: /home/ansibleuser/.ansible/tmp/ansible-local-529zm1_v8o2/tmphohbzjcl/50-identity.rules.j2
++++ after: /home/ansibleuser/.ansible/tmp/ansible-local-143561m229y9/tmpss3h843t/50-identity.rules.j2
 @@ -0,0 +1,7 @@
 +# 6.2.3.12 Ensure events that modify /etc/group information are collected
 +-a always,exit -F path=/etc/group -F perm=wa
@@ -189,7 +189,7 @@ TASK [audit : Deploy auditd rules] *********************************************
 
 changed: [debian-srv] => (item=50-identity)
 --- before
-+++ after: /home/ansibleuser/.ansible/tmp/ansible-local-529zm1_v8o2/tmpme6r5unr/50-scope.rules.j2
++++ after: /home/ansibleuser/.ansible/tmp/ansible-local-143561m229y9/tmpu4ju3p7v/50-scope.rules.j2
 @@ -0,0 +1,3 @@
 +# 6.2.3.1 Ensure modification of the /etc/sudoers file is collected
 +-a always,exit -F path=/etc/sudoers -F perm=wa
