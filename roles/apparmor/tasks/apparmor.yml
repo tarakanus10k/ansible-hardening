@@ -28,13 +28,13 @@
     - name: "1.3.1.2 | remove apparmor=0"
       ansible.builtin.lineinfile:
         path: "{{ item }}"
-        regexp: ' ?\bapparmor=0\b'
+        regexp: (?<=[ \t"'])apparmor=0(?=[ \t"']|$)[ \t]*
         line: ''
       loop: "{{ ['/etc/default/grub'] + ((discovered_grub_d.files | default([])) | map(attribute='path') | list) }}"
       notify: Update-grub
 
     - name: "1.3.1.2 | is enable and active"
-      ansible.builtin.systemcd_service:
+      ansible.builtin.systemd_service:
         name: apparmor
         enabled: true
         state: started
