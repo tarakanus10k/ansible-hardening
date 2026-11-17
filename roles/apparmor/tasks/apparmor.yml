@@ -29,7 +29,7 @@
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: (?<=[ \t"'])apparmor=0(?=[ \t"']|$)[ \t]*
-        line: ''
+        replace: ''
       loop: "{{ ['/etc/default/grub'] + ((discovered_grub_d.files | default([])) | map(attribute='path') | list) }}"
       notify: Update-grub
 
