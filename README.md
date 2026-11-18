@@ -30,44 +30,27 @@ ansible-vault create .ansible-hardening/inventory/host_vars/debian-srv/vault.yml
 # импорт плейбука (аудит)
 https://github.com/ansible-lockdown/DEBIAN13-CIS.git
 ```
-openscap:
-```bash
-# установка
-sudo apt install openscap-scanner ssg-base ssg-debderived ssg-debian
-```
 
 #### 2. Машина №2 (vmware: debian13)
 пользователи:
 - root: пароль отсутствует
 - srvadmin: пользователь, созданный при установке системы
-openscap:
-```bash
-# установка
-sudo apt install openscap-scanner
-```
 
 #### 3. Тесты
 ```bash
 # перед запуском
-export SSH_ADDITIONAL_OPTIONS="-o StrictHostKeyChecking=accept-new"
 eval $(ssh-agent) && ssh-add ~/.ssh/ed25519_ansible_key
 
 # АУДИТ (до)
-# OPENSCAP
-oscap-ssh --sudo srvadmin@192.168.100.10 22 xccdf eval \
-  --profile xccdf_org.ssgproject.content_profile_cis_level2_server \
-  --results openscap-before.xml --report openscap-before.html \
-  /usr/share/xml/scap/ssg/content/ssg-debian13-ds.xml
+scp -i ~/.ssh/ed25519_ansible_key ./audit-script/audit.sh srvadmin@192.168.100.10:~/
+chmod +x ~/audit.sh
+sudo bash ./audit.sh before-hardening.sh
 
 # Запуск плейбука (харденинг)
 ansible-playbook playbooks/site.yml --diff --ask-vault-pass | tee ~/ansible-hardening/tests/ansible-run01.log
 
 # АУДИТ (после)
-# OPENSCAP
-oscap-ssh --sudo srvadmin@192.168.100.10 22 xccdf eval \
-  --profile xccdf_org.ssgproject.content_profile_cis_level2_server \
-  --results openscap-after.xml --report openscap-after.html \
-  /usr/share/xml/scap/ssg/content/ssg-debian13-ds.xml
+sudo bash ./audit.sh after-hardening.sh
   
 # Запуск плейбука (проверка на идемпотентность)
 ansible-playbook playbooks/site.yml --diff --ask-vault-pass | tee ~/ansible-hardening/tests/ansible-run02.log
