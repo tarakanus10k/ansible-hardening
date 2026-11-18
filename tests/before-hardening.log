@@ -1,6 +1,6 @@
-Debian 13 | CIS Benchmark v1.1.0 | 8 выбранных правил
+Debian 13 | CIS Benchmark v1.1.0 | 20 выбранных правил
 Хост: debian-srv
-Время: 2026-11-18T18:43:04+03:00
+Время: 2026-11-18T19:23:25+03:00
 
 [1.3.1.1] Пакеты AppArmor
 $ dpkg-query -W -f=\$\{db:Status-Status\}\\n apparmor
@@ -43,326 +43,122 @@ $ find -L /etc/ssh/sshd_config.d -maxdepth 0 \( \! -uid 0 -o \! -gid 0 -o -perm 
 
 [5.1.15] LoginGraceTime от 1 до 60 секунд
 $ sshd -T
-port 22
-addressfamily any
-listenaddress [::]:22
-listenaddress 0.0.0.0:22
-usepam yes
-pamservicename sshd
-logingracetime 120
-x11displayoffset 10
-maxauthtries 6
-maxsessions 10
-clientaliveinterval 0
-clientalivecountmax 3
-requiredrsasize 1024
-streamlocalbindmask 0177
-unusedconnectiontimeout none
-permitrootlogin without-password
-ignorerhosts yes
-ignoreuserknownhosts no
-hostbasedauthentication no
-hostbasedusesnamefrompacketonly no
-pubkeyauthentication yes
-kerberosauthentication no
-kerberosorlocalpasswd yes
-kerberosticketcleanup yes
-gssapiauthentication no
-gssapicleanupcredentials yes
-gssapikeyexchange no
-gssapistrictacceptorcheck yes
-gssapistorecredentialsonrekey no
-gssapikexalgorithms gss-group14-sha256-,gss-group16-sha512-,gss-nistp256-sha256-,gss-curve25519-sha256-,gss-group14-sha1-,gss-gex-sha1-
-passwordauthentication yes
-kbdinteractiveauthentication no
-printmotd no
-printlastlog yes
-x11forwarding yes
-x11uselocalhost yes
-permittty yes
-permituserrc yes
-strictmodes yes
-tcpkeepalive yes
-permitemptypasswords no
-compression yes
-gatewayports no
-usedns no
-allowtcpforwarding yes
-allowagentforwarding yes
-disableforwarding no
-allowstreamlocalforwarding yes
-streamlocalbindunlink no
-fingerprinthash SHA256
-exposeauthinfo no
-refuseconnection no
-debianbanner yes
-pidfile /run/sshd.pid
-modulifile /etc/ssh/moduli
-xauthlocation /usr/bin/xauth
-ciphers chacha20-poly1305@openssh.com,aes128-gcm@openssh.com,aes256-gcm@openssh.com,aes128-ctr,aes192-ctr,aes256-ctr
-macs umac-64-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha1-etm@openssh.com,umac-64@openssh.com,umac-128@openssh.com,hmac-sha2-256,hmac-sha2-512,hmac-sha1
-banner none
-forcecommand none
-chrootdirectory none
-trustedusercakeys none
-revokedkeys none
-securitykeyprovider internal
-authorizedprincipalsfile none
-versionaddendum none
-authorizedkeyscommand none
-authorizedkeyscommanduser none
-authorizedprincipalscommand none
-authorizedprincipalscommanduser none
-hostkeyagent none
-kexalgorithms mlkem768x25519-sha256,sntrup761x25519-sha512,sntrup761x25519-sha512@openssh.com,curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521
-casignaturealgorithms ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ssh-ed25519@openssh.com,sk-ecdsa-sha2-nistp256@openssh.com,rsa-sha2-512,rsa-sha2-256
-hostbasedacceptedalgorithms ssh-ed25519-cert-v01@openssh.com,ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384-cert-v01@openssh.com,ecdsa-sha2-nistp521-cert-v01@openssh.com,sk-ssh-ed25519-cert-v01@openssh.com,sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,rsa-sha2-512-cert-v01@openssh.com,rsa-sha2-256-cert-v01@openssh.com,ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ssh-ed25519@openssh.com,sk-ecdsa-sha2-nistp256@openssh.com,rsa-sha2-512,rsa-sha2-256
-hostkeyalgorithms ssh-ed25519-cert-v01@openssh.com,ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384-cert-v01@openssh.com,ecdsa-sha2-nistp521-cert-v01@openssh.com,sk-ssh-ed25519-cert-v01@openssh.com,sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,rsa-sha2-512-cert-v01@openssh.com,rsa-sha2-256-cert-v01@openssh.com,ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ssh-ed25519@openssh.com,sk-ecdsa-sha2-nistp256@openssh.com,rsa-sha2-512,rsa-sha2-256
-pubkeyacceptedalgorithms ssh-ed25519-cert-v01@openssh.com,ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384-cert-v01@openssh.com,ecdsa-sha2-nistp521-cert-v01@openssh.com,sk-ssh-ed25519-cert-v01@openssh.com,sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,rsa-sha2-512-cert-v01@openssh.com,rsa-sha2-256-cert-v01@openssh.com,ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ssh-ed25519@openssh.com,sk-ecdsa-sha2-nistp256@openssh.com,rsa-sha2-512,rsa-sha2-256
-sshdsessionpath /usr/lib/openssh/sshd-session
-sshdauthpath /usr/lib/openssh/sshd-auth
-persourcepenaltyexemptlist none
-loglevel INFO
-syslogfacility AUTH
-authorizedkeysfile .ssh/authorized_keys .ssh/authorized_keys2
-hostkey /etc/ssh/ssh_host_rsa_key
-hostkey /etc/ssh/ssh_host_ecdsa_key
-hostkey /etc/ssh/ssh_host_ed25519_key
-acceptenv LANG
-acceptenv LC_*
-acceptenv COLORTERM
-acceptenv NO_COLOR
-authenticationmethods any
-channeltimeout none
-subsystem sftp /usr/lib/openssh/sftp-server
-maxstartups 10:30:100
-persourcemaxstartups none
-persourcenetblocksize 32:128
-permittunnel no
-ipqos ef cs1
-rekeylimit 0 0
-permitopen any
-permitlisten any
-permituserenvironment no
-pubkeyauthoptions none
-persourcepenalties crash:90 authfail:5 noauth:1 grace-exceeded:10 refuseconnection:10 max:600 min:15 max-sources4:65536 max-sources6:65536 overflow:permissive overflow6:permissive
 logingracetime = 120
 Результат: FAIL
 
 [5.1.18] MaxAuthTries не больше 4
 $ sshd -T
-port 22
-addressfamily any
-listenaddress [::]:22
-listenaddress 0.0.0.0:22
-usepam yes
-pamservicename sshd
-logingracetime 120
-x11displayoffset 10
-maxauthtries 6
-maxsessions 10
-clientaliveinterval 0
-clientalivecountmax 3
-requiredrsasize 1024
-streamlocalbindmask 0177
-unusedconnectiontimeout none
-permitrootlogin without-password
-ignorerhosts yes
-ignoreuserknownhosts no
-hostbasedauthentication no
-hostbasedusesnamefrompacketonly no
-pubkeyauthentication yes
-kerberosauthentication no
-kerberosorlocalpasswd yes
-kerberosticketcleanup yes
-gssapiauthentication no
-gssapicleanupcredentials yes
-gssapikeyexchange no
-gssapistrictacceptorcheck yes
-gssapistorecredentialsonrekey no
-gssapikexalgorithms gss-group14-sha256-,gss-group16-sha512-,gss-nistp256-sha256-,gss-curve25519-sha256-,gss-group14-sha1-,gss-gex-sha1-
-passwordauthentication yes
-kbdinteractiveauthentication no
-printmotd no
-printlastlog yes
-x11forwarding yes
-x11uselocalhost yes
-permittty yes
-permituserrc yes
-strictmodes yes
-tcpkeepalive yes
-permitemptypasswords no
-compression yes
-gatewayports no
-usedns no
-allowtcpforwarding yes
-allowagentforwarding yes
-disableforwarding no
-allowstreamlocalforwarding yes
-streamlocalbindunlink no
-fingerprinthash SHA256
-exposeauthinfo no
-refuseconnection no
-debianbanner yes
-pidfile /run/sshd.pid
-modulifile /etc/ssh/moduli
-xauthlocation /usr/bin/xauth
-ciphers chacha20-poly1305@openssh.com,aes128-gcm@openssh.com,aes256-gcm@openssh.com,aes128-ctr,aes192-ctr,aes256-ctr
-macs umac-64-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha1-etm@openssh.com,umac-64@openssh.com,umac-128@openssh.com,hmac-sha2-256,hmac-sha2-512,hmac-sha1
-banner none
-forcecommand none
-chrootdirectory none
-trustedusercakeys none
-revokedkeys none
-securitykeyprovider internal
-authorizedprincipalsfile none
-versionaddendum none
-authorizedkeyscommand none
-authorizedkeyscommanduser none
-authorizedprincipalscommand none
-authorizedprincipalscommanduser none
-hostkeyagent none
-kexalgorithms mlkem768x25519-sha256,sntrup761x25519-sha512,sntrup761x25519-sha512@openssh.com,curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521
-casignaturealgorithms ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ssh-ed25519@openssh.com,sk-ecdsa-sha2-nistp256@openssh.com,rsa-sha2-512,rsa-sha2-256
-hostbasedacceptedalgorithms ssh-ed25519-cert-v01@openssh.com,ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384-cert-v01@openssh.com,ecdsa-sha2-nistp521-cert-v01@openssh.com,sk-ssh-ed25519-cert-v01@openssh.com,sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,rsa-sha2-512-cert-v01@openssh.com,rsa-sha2-256-cert-v01@openssh.com,ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ssh-ed25519@openssh.com,sk-ecdsa-sha2-nistp256@openssh.com,rsa-sha2-512,rsa-sha2-256
-hostkeyalgorithms ssh-ed25519-cert-v01@openssh.com,ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384-cert-v01@openssh.com,ecdsa-sha2-nistp521-cert-v01@openssh.com,sk-ssh-ed25519-cert-v01@openssh.com,sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,rsa-sha2-512-cert-v01@openssh.com,rsa-sha2-256-cert-v01@openssh.com,ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ssh-ed25519@openssh.com,sk-ecdsa-sha2-nistp256@openssh.com,rsa-sha2-512,rsa-sha2-256
-pubkeyacceptedalgorithms ssh-ed25519-cert-v01@openssh.com,ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384-cert-v01@openssh.com,ecdsa-sha2-nistp521-cert-v01@openssh.com,sk-ssh-ed25519-cert-v01@openssh.com,sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,rsa-sha2-512-cert-v01@openssh.com,rsa-sha2-256-cert-v01@openssh.com,ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ssh-ed25519@openssh.com,sk-ecdsa-sha2-nistp256@openssh.com,rsa-sha2-512,rsa-sha2-256
-sshdsessionpath /usr/lib/openssh/sshd-session
-sshdauthpath /usr/lib/openssh/sshd-auth
-persourcepenaltyexemptlist none
-loglevel INFO
-syslogfacility AUTH
-authorizedkeysfile .ssh/authorized_keys .ssh/authorized_keys2
-hostkey /etc/ssh/ssh_host_rsa_key
-hostkey /etc/ssh/ssh_host_ecdsa_key
-hostkey /etc/ssh/ssh_host_ed25519_key
-acceptenv LANG
-acceptenv LC_*
-acceptenv COLORTERM
-acceptenv NO_COLOR
-authenticationmethods any
-channeltimeout none
-subsystem sftp /usr/lib/openssh/sftp-server
-maxstartups 10:30:100
-persourcemaxstartups none
-persourcenetblocksize 32:128
-permittunnel no
-ipqos ef cs1
-rekeylimit 0 0
-permitopen any
-permitlisten any
-permituserenvironment no
-pubkeyauthoptions none
-persourcepenalties crash:90 authfail:5 noauth:1 grace-exceeded:10 refuseconnection:10 max:600 min:15 max-sources4:65536 max-sources6:65536 overflow:permissive overflow6:permissive
 maxauthtries = 6
 Результат: FAIL
 
 [5.1.21] PermitEmptyPasswords = no
 $ sshd -T
-port 22
-addressfamily any
-listenaddress [::]:22
-listenaddress 0.0.0.0:22
-usepam yes
-pamservicename sshd
-logingracetime 120
-x11displayoffset 10
-maxauthtries 6
-maxsessions 10
-clientaliveinterval 0
-clientalivecountmax 3
-requiredrsasize 1024
-streamlocalbindmask 0177
-unusedconnectiontimeout none
-permitrootlogin without-password
-ignorerhosts yes
-ignoreuserknownhosts no
-hostbasedauthentication no
-hostbasedusesnamefrompacketonly no
-pubkeyauthentication yes
-kerberosauthentication no
-kerberosorlocalpasswd yes
-kerberosticketcleanup yes
-gssapiauthentication no
-gssapicleanupcredentials yes
-gssapikeyexchange no
-gssapistrictacceptorcheck yes
-gssapistorecredentialsonrekey no
-gssapikexalgorithms gss-group14-sha256-,gss-group16-sha512-,gss-nistp256-sha256-,gss-curve25519-sha256-,gss-group14-sha1-,gss-gex-sha1-
-passwordauthentication yes
-kbdinteractiveauthentication no
-printmotd no
-printlastlog yes
-x11forwarding yes
-x11uselocalhost yes
-permittty yes
-permituserrc yes
-strictmodes yes
-tcpkeepalive yes
-permitemptypasswords no
-compression yes
-gatewayports no
-usedns no
-allowtcpforwarding yes
-allowagentforwarding yes
-disableforwarding no
-allowstreamlocalforwarding yes
-streamlocalbindunlink no
-fingerprinthash SHA256
-exposeauthinfo no
-refuseconnection no
-debianbanner yes
-pidfile /run/sshd.pid
-modulifile /etc/ssh/moduli
-xauthlocation /usr/bin/xauth
-ciphers chacha20-poly1305@openssh.com,aes128-gcm@openssh.com,aes256-gcm@openssh.com,aes128-ctr,aes192-ctr,aes256-ctr
-macs umac-64-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha1-etm@openssh.com,umac-64@openssh.com,umac-128@openssh.com,hmac-sha2-256,hmac-sha2-512,hmac-sha1
-banner none
-forcecommand none
-chrootdirectory none
-trustedusercakeys none
-revokedkeys none
-securitykeyprovider internal
-authorizedprincipalsfile none
-versionaddendum none
-authorizedkeyscommand none
-authorizedkeyscommanduser none
-authorizedprincipalscommand none
-authorizedprincipalscommanduser none
-hostkeyagent none
-kexalgorithms mlkem768x25519-sha256,sntrup761x25519-sha512,sntrup761x25519-sha512@openssh.com,curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521
-casignaturealgorithms ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ssh-ed25519@openssh.com,sk-ecdsa-sha2-nistp256@openssh.com,rsa-sha2-512,rsa-sha2-256
-hostbasedacceptedalgorithms ssh-ed25519-cert-v01@openssh.com,ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384-cert-v01@openssh.com,ecdsa-sha2-nistp521-cert-v01@openssh.com,sk-ssh-ed25519-cert-v01@openssh.com,sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,rsa-sha2-512-cert-v01@openssh.com,rsa-sha2-256-cert-v01@openssh.com,ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ssh-ed25519@openssh.com,sk-ecdsa-sha2-nistp256@openssh.com,rsa-sha2-512,rsa-sha2-256
-hostkeyalgorithms ssh-ed25519-cert-v01@openssh.com,ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384-cert-v01@openssh.com,ecdsa-sha2-nistp521-cert-v01@openssh.com,sk-ssh-ed25519-cert-v01@openssh.com,sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,rsa-sha2-512-cert-v01@openssh.com,rsa-sha2-256-cert-v01@openssh.com,ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ssh-ed25519@openssh.com,sk-ecdsa-sha2-nistp256@openssh.com,rsa-sha2-512,rsa-sha2-256
-pubkeyacceptedalgorithms ssh-ed25519-cert-v01@openssh.com,ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384-cert-v01@openssh.com,ecdsa-sha2-nistp521-cert-v01@openssh.com,sk-ssh-ed25519-cert-v01@openssh.com,sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,rsa-sha2-512-cert-v01@openssh.com,rsa-sha2-256-cert-v01@openssh.com,ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ssh-ed25519@openssh.com,sk-ecdsa-sha2-nistp256@openssh.com,rsa-sha2-512,rsa-sha2-256
-sshdsessionpath /usr/lib/openssh/sshd-session
-sshdauthpath /usr/lib/openssh/sshd-auth
-persourcepenaltyexemptlist none
-loglevel INFO
-syslogfacility AUTH
-authorizedkeysfile .ssh/authorized_keys .ssh/authorized_keys2
-hostkey /etc/ssh/ssh_host_rsa_key
-hostkey /etc/ssh/ssh_host_ecdsa_key
-hostkey /etc/ssh/ssh_host_ed25519_key
-acceptenv LANG
-acceptenv LC_*
-acceptenv COLORTERM
-acceptenv NO_COLOR
-authenticationmethods any
-channeltimeout none
-subsystem sftp /usr/lib/openssh/sftp-server
-maxstartups 10:30:100
-persourcemaxstartups none
-persourcenetblocksize 32:128
-permittunnel no
-ipqos ef cs1
-rekeylimit 0 0
-permitopen any
-permitlisten any
-permituserenvironment no
-pubkeyauthoptions none
-persourcepenalties crash:90 authfail:5 noauth:1 grace-exceeded:10 refuseconnection:10 max:600 min:15 max-sources4:65536 max-sources6:65536 overflow:permissive overflow6:permissive
 permitemptypasswords = no
 $ grep -Ei \^\[\[:blank:\]\]\*\(include\|match\)\(\[\[:blank:\]=\]\|\$\) /etc/ssh/sshd_config
 Include /etc/ssh/sshd_config.d/*.conf
 Результат: PASS
+
+[5.1.22] PermitRootLogin = no
+$ sshd -T
+permitrootlogin = without-password
+Результат: FAIL
+
+[5.2.1] Установлен sudo или sudo-rs
+$ dpkg-query -W -f=\$\{db:Status-Status\}\\n sudo
+installed
+$ dpkg-query -W -f=\$\{db:Status-Status\}\\n sudo-rs
+dpkg-query: no packages found matching sudo-rs
+Результат: PASS
+
+[5.2.6] timestamp_timeout от 0 до 15 минут
+$ dpkg-query -W -f=\$\{db:Status-Status\}\\n sudo
+installed
+$ dpkg-query -W -f=\$\{db:Status-Status\}\\n sudo-rs
+dpkg-query: no packages found matching sudo-rs
+$ sudo -V
+Sudo version 1.9.16p2
+$ visudo -c
+/etc/sudoers: parsed OK
+/etc/sudoers.d/README: parsed OK
+$ cvtsudoers -c /dev/null -i sudoers -f sudoers -d all -s aliases\,privileges /etc/sudoers
+Неожиданная строка при чтении sudoers: Defaults\
+Неожиданная строка при чтении sudoers:     secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin
+Результат: REVIEW
+
+[5.3.1.1] Актуальная версия libpam-runtime по локальному кэшу APT
+$ dpkg-query -W -f=\$\{db:Status-Status\}\\n libpam-runtime
+installed
+$ dpkg-query -W -f=\$\{Version\}\\n libpam-runtime
+1.7.0-5
+$ apt-cache policy libpam-runtime
+libpam-runtime:
+  Installed: 1.7.0-5
+  Candidate: 1.7.0-5
+  Version table:
+ *** 1.7.0-5 500
+        500 http://deb.debian.org/debian trixie/main amd64 Packages
+        100 /var/lib/dpkg/status
+Установленная версия: 1.7.0-5. Кандидат из локального кэша APT: 1.7.0-5.
+Результат: PASS
+
+[5.3.2.1] pam_unix в пяти common-стеках
+$ awk -v mode=enabled $'\n            /^[[:blank:]]*#/ {next}\n            {\n                sub(/[[:blank:]]*#.*/, "")\n                for (i=1; i<=NF; i++) {\n                    if ($i !~ /(^|\\/)pam_unix\\.so$/) continue\n                    found=1\n                    print FNR ":" $0\n                    for (j=i+1; j<=NF; j++) if ($j=="nullok") bad=1\n                    break\n                }\n            }\n            END {if (mode=="enabled") exit !found; exit bad}\n        ' /etc/pam.d/common-account
+17:account	[success=1 new_authtok_reqd=done default=ignore]	pam_unix.so 
+$ awk -v mode=enabled $'\n            /^[[:blank:]]*#/ {next}\n            {\n                sub(/[[:blank:]]*#.*/, "")\n                for (i=1; i<=NF; i++) {\n                    if ($i !~ /(^|\\/)pam_unix\\.so$/) continue\n                    found=1\n                    print FNR ":" $0\n                    for (j=i+1; j<=NF; j++) if ($j=="nullok") bad=1\n                    break\n                }\n            }\n            END {if (mode=="enabled") exit !found; exit bad}\n        ' /etc/pam.d/common-auth
+17:auth	[success=1 default=ignore]	pam_unix.so nullok
+$ awk -v mode=enabled $'\n            /^[[:blank:]]*#/ {next}\n            {\n                sub(/[[:blank:]]*#.*/, "")\n                for (i=1; i<=NF; i++) {\n                    if ($i !~ /(^|\\/)pam_unix\\.so$/) continue\n                    found=1\n                    print FNR ":" $0\n                    for (j=i+1; j<=NF; j++) if ($j=="nullok") bad=1\n                    break\n                }\n            }\n            END {if (mode=="enabled") exit !found; exit bad}\n        ' /etc/pam.d/common-password
+25:password	[success=1 default=ignore]	pam_unix.so obscure yescrypt
+$ awk -v mode=enabled $'\n            /^[[:blank:]]*#/ {next}\n            {\n                sub(/[[:blank:]]*#.*/, "")\n                for (i=1; i<=NF; i++) {\n                    if ($i !~ /(^|\\/)pam_unix\\.so$/) continue\n                    found=1\n                    print FNR ":" $0\n                    for (j=i+1; j<=NF; j++) if ($j=="nullok") bad=1\n                    break\n                }\n            }\n            END {if (mode=="enabled") exit !found; exit bad}\n        ' /etc/pam.d/common-session
+25:session	required	pam_unix.so 
+$ awk -v mode=enabled $'\n            /^[[:blank:]]*#/ {next}\n            {\n                sub(/[[:blank:]]*#.*/, "")\n                for (i=1; i<=NF; i++) {\n                    if ($i !~ /(^|\\/)pam_unix\\.so$/) continue\n                    found=1\n                    print FNR ":" $0\n                    for (j=i+1; j<=NF; j++) if ($j=="nullok") bad=1\n                    break\n                }\n            }\n            END {if (mode=="enabled") exit !found; exit bad}\n        ' /etc/pam.d/common-session-noninteractive
+26:session	required	pam_unix.so 
+Результат: PASS
+
+[5.3.3.4.1] pam_unix без nullok
+$ awk -v mode=nullok $'\n            /^[[:blank:]]*#/ {next}\n            {\n                sub(/[[:blank:]]*#.*/, "")\n                for (i=1; i<=NF; i++) {\n                    if ($i !~ /(^|\\/)pam_unix\\.so$/) continue\n                    found=1\n                    print FNR ":" $0\n                    for (j=i+1; j<=NF; j++) if ($j=="nullok") bad=1\n                    break\n                }\n            }\n            END {if (mode=="enabled") exit !found; exit bad}\n        ' /etc/pam.d/common-account
+17:account	[success=1 new_authtok_reqd=done default=ignore]	pam_unix.so 
+$ awk -v mode=nullok $'\n            /^[[:blank:]]*#/ {next}\n            {\n                sub(/[[:blank:]]*#.*/, "")\n                for (i=1; i<=NF; i++) {\n                    if ($i !~ /(^|\\/)pam_unix\\.so$/) continue\n                    found=1\n                    print FNR ":" $0\n                    for (j=i+1; j<=NF; j++) if ($j=="nullok") bad=1\n                    break\n                }\n            }\n            END {if (mode=="enabled") exit !found; exit bad}\n        ' /etc/pam.d/common-auth
+17:auth	[success=1 default=ignore]	pam_unix.so nullok
+$ awk -v mode=nullok $'\n            /^[[:blank:]]*#/ {next}\n            {\n                sub(/[[:blank:]]*#.*/, "")\n                for (i=1; i<=NF; i++) {\n                    if ($i !~ /(^|\\/)pam_unix\\.so$/) continue\n                    found=1\n                    print FNR ":" $0\n                    for (j=i+1; j<=NF; j++) if ($j=="nullok") bad=1\n                    break\n                }\n            }\n            END {if (mode=="enabled") exit !found; exit bad}\n        ' /etc/pam.d/common-password
+25:password	[success=1 default=ignore]	pam_unix.so obscure yescrypt
+$ awk -v mode=nullok $'\n            /^[[:blank:]]*#/ {next}\n            {\n                sub(/[[:blank:]]*#.*/, "")\n                for (i=1; i<=NF; i++) {\n                    if ($i !~ /(^|\\/)pam_unix\\.so$/) continue\n                    found=1\n                    print FNR ":" $0\n                    for (j=i+1; j<=NF; j++) if ($j=="nullok") bad=1\n                    break\n                }\n            }\n            END {if (mode=="enabled") exit !found; exit bad}\n        ' /etc/pam.d/common-session
+25:session	required	pam_unix.so 
+$ awk -v mode=nullok $'\n            /^[[:blank:]]*#/ {next}\n            {\n                sub(/[[:blank:]]*#.*/, "")\n                for (i=1; i<=NF; i++) {\n                    if ($i !~ /(^|\\/)pam_unix\\.so$/) continue\n                    found=1\n                    print FNR ":" $0\n                    for (j=i+1; j<=NF; j++) if ($j=="nullok") bad=1\n                    break\n                }\n            }\n            END {if (mode=="enabled") exit !found; exit bad}\n        ' /etc/pam.d/common-session-noninteractive
+26:session	required	pam_unix.so 
+Результат: FAIL
+
+[6.2.1.1] Установлены auditd и audispd-plugins
+$ dpkg-query -W -f=\$\{db:Status-Status\}\\n auditd
+dpkg-query: no packages found matching auditd
+$ dpkg-query -W -f=\$\{db:Status-Status\}\\n audispd-plugins
+dpkg-query: no packages found matching audispd-plugins
+Результат: FAIL
+
+[6.2.1.2] auditd включён и активен
+$ systemctl is-enabled auditd.service
+not-found
+$ systemctl is-active auditd.service
+inactive
+Результат: FAIL
+
+[6.2.3.1] Аудит изменений sudoers и sudoers.d
+$ auditctl -s
+./audit.sh: line 13: auditctl: command not found
+Результат: REVIEW
+
+[6.2.3.12] Аудит изменений /etc/group
+$ auditctl -s
+./audit.sh: line 13: auditctl: command not found
+Результат: REVIEW
+
+[6.2.3.13] Аудит изменений /etc/passwd
+$ auditctl -s
+./audit.sh: line 13: auditctl: command not found
+Результат: REVIEW
+
+[6.2.3.14] Аудит изменений /etc/shadow и /etc/gshadow
+$ auditctl -s
+./audit.sh: line 13: auditctl: command not found
+Результат: REVIEW
+
+Итого: PASS=5 FAIL=10 REVIEW=5
