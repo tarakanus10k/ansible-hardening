@@ -70,71 +70,6 @@ check_service() {
     esac
 }
 
-check_apparmor() {
-    local rc file
-    local disabled="(^|[[:space:]\"'])apparmor=0([[:space:]\"']|$)"
-    local grub_variable='^[[:blank:]]*(export[[:blank:]]+)?GRUB_CMDLINE_LINUX(_[A-Z]+)?[[:blank:]]*='
-    check_service apparmor.service || return $?
-    run aa-status --profiled
-    rc=$?
-    case $rc in 1|2) return 1 ;; 0) ;; *) return 2 ;; esac
-    [[ $output =~ ^[0-9]+$ ]] || return 2
-    [[ $output =~ [1-9] ]] || return 1
-
-    run grep -E "$disabled" /proc/cmdline
-    case $? in 0) return 1 ;; 1) ;; *) return 2 ;; esac
-
-    # В сгенерированном GRUB интересуют только команды загрузки ядра.
-    if ! run grep -E '^[[:blank:]]*linux(efi|16)?[[:blank:]]' /boot/grub/grub.cfg; then
-        printf 'Не удалось подтвердить параметры загрузчика GRUB.\n'
-        return 2
-    fi
-    [[ ! $output =~ $disabled ]] || return 1
-
-    for file in /etc/default/grub /etc/default/grub.d/*.cfg; do
-        [[ -e $file ]] || continue
-        run grep -E "${grub_variable}([^#]*[[:blank:]\"'])?apparmor=0([[:blank:]\"']|$)" "$file"
-        case $? in 0) return 1 ;; 1) ;; *) return 2 ;; esac
-    done
-}
-
-check_apparmor_sysctl() {
-    local key=kernel.apparmor_restrict_unprivileged_unconfined effective
-    run sysctl -n "$key" || return 2
-    [[ $output == 1 ]] || return 1
-
-    # --cat-config показывает итоговый порядок файлов, ничего не применяя.
-    if ! run /usr/lib/systemd/systemd-sysctl --cat-config; then
-        return 2
-    fi
-    effective=$(awk -F= -v key="$key" '
-        /^[[:blank:]]*[#;]/ { next }
-        NF > 1 {
-            name=$1
-            gsub(/[[:blank:]]/, "", name)
-            sub(/^-/, "", name)
-            gsub(/\//, ".", name)
-            if (name == key) {
-                value=$2
-                sub(/[[:blank:]]*[#;].*$/, "", value)
-                gsub(/[[:blank:]]/, "", value)
-            }
-        }
-        END {print value}
-    ' <<< "$output") || return 2
-    printf 'Эффективное значение при загрузке: %s\n' "${effective:-не задано}"
-
-    if [[ -f /etc/default/ufw ]]; then
-        run grep -E '^[[:blank:]]*IPT_SYSCTL[[:blank:]]*=' /etc/default/ufw
-        case $? in
-            0) printf 'UFW может загружать отдельный файл sysctl. Требуется ручная проверка.\n'; return 2 ;;
-            1) ;;
-            *) return 2 ;;
-        esac
-    fi
-    [[ $effective == 1 ]]
-}
-
 # Поддерживаем обычные Include Debian. Для нестандартных путей и Match
 # сохраняем наблюдения, но не выставляем PASS по неполным данным.
 ssh_scope() (
@@ -262,8 +197,32 @@ timeout_policy() {
     '
 }
 
-check_sudo_timeout() {
-    local actual_version policy nss
+authenticate_policy() {
+    awk '
+      {
+        line=pending $0
+        if(match(line,/\\+$/) && RLENGTH%2) {
+          pending=substr(line,1,length(line)-1); next
+        }
+        pending=""
+        if(line ~ /^[[:space:]]*($|#)/)next
+        if(line !~ /^[[:space:]]*Defaults([[:space:]:@>!]|$)/){review=1; next}
+        sub(/#.*/, "", line)
+        if(line ~ /(^|[[:space:],])!authenticate([[:space:],]|$)/) {
+          print "Отключена аутентификация: "line; bad=1
+        }
+        if(line ~ /["\\]/)review=1
+      }
+      END {
+        if(bad)exit 1
+        if(review || pending!="")exit 2
+        print "Defaults с !authenticate не найдены."
+      }
+    '
+}
+
+check_sudo_policy() {
+    local checker=$1 actual_version policy nss
     check_sudo_installed || return $?
     if ! capture sudo -V; then
         printf '%s\n' "$output"
@@ -272,7 +231,7 @@ check_sudo_timeout() {
     actual_version=${output%%$'\n'*}
     printf '%s\n' "$actual_version"
     case $actual_version in
-        *sudo-rs*|*Sudo-rs*) printf 'Для активного sudo-rs проверьте поддержку timestamp_timeout вручную.\n'; return 2 ;;
+        *sudo-rs*|*Sudo-rs*) printf 'Для активного sudo-rs проверьте политику Defaults вручную.\n'; return 2 ;;
         'Sudo version '*) ;;
         *) printf 'Не удалось определить реализацию sudo.\n'; return 2 ;;
     esac
@@ -283,7 +242,7 @@ check_sudo_timeout() {
         return 2
     fi
     policy=$output
-    timeout_policy <<< "$policy" || return $?
+    "$checker" <<< "$policy" || return $?
 
     # Отдельный источник sudoers может изменить эффективную политику.
     run awk '/^[[:blank:]]*sudoers[[:blank:]]*:/ {sub(/#.*/, ""); print}' /etc/nsswitch.conf || return 2
@@ -294,7 +253,47 @@ check_sudo_timeout() {
     fi
 }
 
-# PAM: пакет libpam-runtime и активные строки пяти common-стеков.
+check_su_restricted() {
+    local group entry name password gid members
+    [[ -f /etc/pam.d/su ]] || return 1
+    # Ограничение должно срабатывать до sufficient/include/substack.
+    run awk '
+      {sub(/#.*/, "")}
+      $1=="@include" {prior=1}
+      $1=="auth" || $1=="-auth" {
+        if(($2=="required" || $2=="requisite") && $3 ~ /(^|\/)pam_wheel[.]so$/) {
+          group=""; use_uid=0; bad=0
+          for(i=4;i<=NF;i++) {
+            if($i=="use_uid")use_uid=1
+            else if($i ~ /^group=/){group=$i; sub(/^group=/,"",group)}
+            else bad=1
+          }
+          if(group!="" && use_uid && !bad) {
+            if(prior)review=1
+            else {print group; found=1; exit}
+          }
+        }
+        prior=1
+      }
+      END {if(!found){if(review)exit 2; exit 1}}
+    ' /etc/pam.d/su || return $?
+    group=$output
+    run getent group "$group"
+    case $? in 0) ;; 2) return 1 ;; *) return 2 ;; esac
+    entry=$output
+    [[ $entry != *$'\n'* ]] || return 2
+    IFS=: read -r name password gid members <<< "$entry"
+    [[ $name == "$group" && $gid =~ ^[0-9]+$ ]] || return 2
+    [[ -z $members ]] || return 1
+    capture getent passwd || return 2
+    if awk -F: -v gid="$gid" '$4==gid {found=1; print $1} END {exit !found}' <<< "$output"; then
+        printf 'В ограничивающей группе есть пользователи с основным GID %s.\n' "$gid"
+        return 1
+    fi
+    printf 'Группа %s пуста, pam_wheel с use_uid включён перед остальным auth-стеком.\n' "$group"
+}
+
+# PAM: пакет libpam-runtime, модуль faillock и его эффективные параметры.
 check_pam_version() {
     local installed candidate
     check_packages libpam-runtime || return $?
@@ -308,43 +307,93 @@ check_pam_version() {
     [[ $installed == "$candidate" ]]
 }
 
-check_pam_unix() {
-    local mode=$1 file rc missing=0
-    local -a files=(/etc/pam.d/common-{account,auth,password,session,session-noninteractive})
-    # Сопоставляем имя модуля в его поле, пропуская комментарии и аргументы других модулей.
-    local pam_unix='^\h*-?(?:account|auth|password|session)\h+(?:\[[^#\]\r\n]+\]|[^#\h]+)\h+(?:[^#\h]+/)?pam_unix\.so(?=\h|#|$)'
+check_pam_faillock() {
+    [[ -f /etc/pam.d/common-auth && -f /etc/pam.d/common-account ]] || return 1
+    check_packages libpam-modules || return $?
+    run awk '
+      {
+        sub(/#.*/, "")
+        type=$1
+        if(type=="@include" || $2=="include" || $2=="substack")review=1
+        if(type!="auth" && type!="account")next
+        line=$0
+        sub(/^[[:space:]]*[^[:space:]]+[[:space:]]+/, "", line)
+        control=line
+        if(line ~ /^\[/) {
+          sub(/\].*$/, "]", control)
+          sub(/^\[[^]]+\][[:space:]]+/, "", line)
+        } else {
+          sub(/[[:space:]].*$/, "", control)
+          sub(/^[^[:space:]]+[[:space:]]+/, "", line)
+        }
+        n=split(line,args,/[[:space:]]+/)
+        if(args[1] !~ /(^|\/)pam_faillock[.]so$/) {
+          if(type=="auth" && !pre && control=="sufficient")review=1
+          next
+        }
+        print FILENAME ":" FNR ": " $0
+        if(type=="account") {
+          if(control=="required" || control=="requisite")account=1
+          else review=1
+          next
+        }
+        for(i=2;i<=n;i++) {
+          if(args[i]=="preauth") {
+            pre=FNR
+            if(control!="required" && control!="requisite")review=1
+          }
+          if(args[i]=="authfail") {
+            fail=FNR
+            if(control!="required" && control!="requisite" && control!="[default=die]")review=1
+          }
+        }
+      }
+      END {
+        if(!pre || !fail || !account || pre>=fail)exit 1
+        if(review)exit 2
+      }
+    ' /etc/pam.d/common-auth /etc/pam.d/common-account
+}
 
-    for file in "${files[@]}"; do
-        if [[ ! -f $file ]]; then
-            printf 'Отсутствует: %s\n' "$file"
-            missing=1
-        elif [[ ! -r $file ]]; then
-            printf 'Не удалось прочитать: %s\n' "$file"
-            return 2
-        fi
-    done
-    (( missing == 0 )) || return 1
-
-    if [[ $mode == nullok ]]; then
-        run grep -PH -- "$pam_unix"'\h+(?:[^#\r\n]*\h+)?nullok(?=\h|#|$)' "${files[@]}"
-        rc=$?
-        case $rc in
-            0) return 1 ;;  # Найдено запрещённое значение.
-            1) printf 'Аргумент nullok в активных строках pam_unix не найден.\n'; return 0 ;;
-            *) return 2 ;;
-        esac
-    fi
-
-    run grep -PH -- "$pam_unix" "${files[@]}"
-    rc=$?
-    (( rc <= 1 )) || return 2
-    for file in "${files[@]}"; do
-        if [[ $'\n'$output != *$'\n'"$file:"* ]]; then
-            printf 'Нет активной строки pam_unix: %s\n' "$file"
-            missing=1
-        fi
-    done
-    return "$missing"
+check_faillock_option() {
+    local key=$1 value
+    check_pam_faillock || return $?
+    [[ -f /etc/security/faillock.conf ]] || return 1
+    run awk -F= -v key="$key" '
+      {sub(/#.*/, ""); name=$1; gsub(/[[:space:]]/, "", name)}
+      name==key {value=$2; gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)}
+      END {print value}
+    ' /etc/security/faillock.conf || return 2
+    value=$output
+    printf '%s = %s\n' "$key" "${value:-не задано}"
+    [[ $value =~ ^[0-9]{1,9}$ ]] || return 1
+    case $key in
+        deny) (( 10#$value >= 1 && 10#$value <= 5 )) || return 1 ;;
+        unlock_time) (( 10#$value == 0 || 10#$value >= 900 )) || return 1 ;;
+        *) return 2 ;;
+    esac
+    # Параметры строки модуля имеют приоритет над faillock.conf.
+    run awk -v key="$key" '
+      {
+        sub(/#.*/, "")
+        if($0 !~ /^[[:space:]]*(auth|account)[[:space:]]+/)next
+        line=$0
+        sub(/^[[:space:]]*[^[:space:]]+[[:space:]]+(\[[^]]+\]|[^[:space:]]+)[[:space:]]+/, "", line)
+        n=split(line,args,/[[:space:]]+/)
+        if(args[1] !~ /(^|\/)pam_faillock[.]so$/)next
+        for(i=2;i<=n;i++) {
+          if(args[i] ~ /^conf=/){print "Отдельный файл конфигурации: "args[i]; review=1}
+          if(args[i] ~ ("^"key"=")) {
+            v=args[i]; sub(/^[^=]*=/, "", v)
+            print FILENAME ":" FNR ": "args[i]
+            if(v !~ /^[0-9]+$/)bad=1
+            else if(key=="deny" && (v+0<1 || v+0>5))bad=1
+            else if(key=="unlock_time" && v+0!=0 && v+0<900)bad=1
+          }
+        }
+      }
+      END {if(bad)exit 1; if(review)exit 2}
+    ' /etc/pam.d/common-auth /etc/pam.d/common-account
 }
 
 # Linux Audit: сверяем постоянные правила с правилами, загруженными в ядро.
@@ -472,9 +521,6 @@ main() {
     if ! exec 3> "$log"; then return 2; fi
     printf 'Debian 13 | CIS Benchmark v1.1.0 | 20 выбранных правил\nХост: %s\nВремя: %s\n' \
         "$(hostname)" "$(date --iso-8601=seconds)" >&3
-    check 1.3.1.1 'Пакеты AppArmor' check_packages apparmor apparmor-utils
-    check 1.3.1.2 'AppArmor включён' check_apparmor
-    check 1.3.1.4 'Ограничение unprivileged unconfined' check_apparmor_sysctl
     check 5.1.1 'Права файлов sshd_config' check_ssh_files
     check 5.1.2 'Права каталога sshd_config.d' check_ssh_directory
     check 5.1.15 'LoginGraceTime от 1 до 60 секунд' check_ssh_option logingracetime
@@ -482,10 +528,13 @@ main() {
     check 5.1.21 'PermitEmptyPasswords = no' check_ssh_option permitemptypasswords
     check 5.1.22 'PermitRootLogin = no' check_ssh_option permitrootlogin
     check 5.2.1 'Установлен sudo или sudo-rs' check_sudo_installed
-    check 5.2.6 'timestamp_timeout от 0 до 15 минут' check_sudo_timeout
+    check 5.2.5 'Повторная аутентификация sudo не отключена глобально' check_sudo_policy authenticate_policy
+    check 5.2.6 'timestamp_timeout от 0 до 15 минут' check_sudo_policy timeout_policy
+    check 5.2.7 'Доступ к su ограничен пустой группой' check_su_restricted
     check 5.3.1.1 'Актуальная версия libpam-runtime по локальному кэшу APT' check_pam_version
-    check 5.3.2.1 'pam_unix в пяти common-стеках' check_pam_unix enabled
-    check 5.3.3.4.1 'pam_unix без nullok' check_pam_unix nullok
+    check 5.3.2.2 'pam_faillock включён в auth и account' check_pam_faillock
+    check 5.3.3.1.1 'Блокировка после 1–5 неудачных попыток' check_faillock_option deny
+    check 5.3.3.1.2 'Разблокировка через 900 секунд или вручную' check_faillock_option unlock_time
     check 6.2.1.1 'Установлены auditd и audispd-plugins' check_packages auditd audispd-plugins
     check 6.2.1.2 'auditd включён и активен' check_service auditd.service
     check 6.2.3.1 'Аудит изменений sudoers и sudoers.d' check_audit_rules path /etc/sudoers dir /etc/sudoers.d
