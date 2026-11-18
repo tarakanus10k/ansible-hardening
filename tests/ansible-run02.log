@@ -90,7 +90,7 @@ TASK [apparmor : 1.3.1.4 | find files] *****************************************
 ok: [debian-srv]
 
 TASK [apparmor : 1.3.1.4 | comment out files] **********************************
-skipping: [debian-srv] => (item={'path': '/etc/sysctl.d/60-kernel_sysctl.conf', 'mode': '0644', 'isdir': False, 'ischr': False, 'isblk': False, 'isreg': True, 'isfifo': False, 'islnk': False, 'issock': False, 'uid': 0, 'gid': 0, 'size': 51, 'inode': 916950, 'dev': 65024, 'nlink': 1, 'atime': 1794899035.8096225, 'mtime': 1794899035.8016248, 'ctime': 1794899035.8016248, 'gr_name': 'root', 'pw_name': 'root', 'wusr': True, 'rusr': True, 'xusr': False, 'wgrp': False, 'rgrp': True, 'xgrp': False, 'woth': False, 'roth': True, 'xoth': False, 'isuid': False, 'isgid': False, 'blocks': 8, 'disk_usage_bytes': 4096}) 
+skipping: [debian-srv] => (item={'path': '/etc/sysctl.d/60-kernel_sysctl.conf', 'mode': '0644', 'isdir': False, 'ischr': False, 'isblk': False, 'isreg': True, 'isfifo': False, 'islnk': False, 'issock': False, 'uid': 0, 'gid': 0, 'size': 51, 'inode': 916950, 'dev': 65024, 'nlink': 1, 'atime': 1795017148.7441435, 'mtime': 1795017148.7401438, 'ctime': 1795017148.7401438, 'gr_name': 'root', 'pw_name': 'root', 'wusr': True, 'rusr': True, 'xusr': False, 'wgrp': False, 'rgrp': True, 'xgrp': False, 'woth': False, 'roth': True, 'xoth': False, 'isuid': False, 'isgid': False, 'blocks': 8, 'disk_usage_bytes': 4096}) 
 skipping: [debian-srv]
 
 TASK [apparmor : 1.3.1.4 | Ensure kernel.apparmor_restrict_unprivileged_unconfined is enabled] ***

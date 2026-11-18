@@ -135,7 +135,10 @@ changed: [debian-srv] => (item=/etc/pam.d/common-auth)
 changed: [debian-srv] => (item=/usr/share/pam-configs/unix)
 
 TASK [sudo : 5.2.1 Ensure sudo is installed] ***********************************
-ok: [debian-srv]
+The following NEW packages will be installed:
+  sudo-rs
+0 upgraded, 1 newly installed, 0 to remove and 7 not upgraded.
+changed: [debian-srv]
 
 TASK [sudo : 5.2.6 | files with timestamp_timeout] *****************************
 ok: [debian-srv]
@@ -155,9 +158,11 @@ TASK [sudo : 5.2.6 | change timestamp_timeout if >= 1] *************************
 skipping: [debian-srv]
 
 TASK [audit : 6.2.1.1 Ensure auditd packages are installed] ********************
+The following additional packages will be installed:
+  libauparse0t64
 The following NEW packages will be installed:
-  audispd-plugins
-0 upgraded, 1 newly installed, 0 to remove and 7 not upgraded.
+  audispd-plugins auditd libauparse0t64
+0 upgraded, 3 newly installed, 0 to remove and 7 not upgraded.
 changed: [debian-srv]
 
 TASK [audit : 6.2.1.2 Ensure auditd service is enabled and active] *************
@@ -177,23 +182,23 @@ ok: [debian-srv]
 
 TASK [audit : Deploy auditd rules] *********************************************
 --- before
-+++ after: /home/ansibleuser/.ansible/tmp/ansible-local-143561m229y9/tmpss3h843t/50-identity.rules.j2
++++ after: /home/ansibleuser/.ansible/tmp/ansible-local-5065t7636_vw/tmpjptwi038/50-identity.rules.j2
 @@ -0,0 +1,7 @@
 +# 6.2.3.12 Ensure events that modify /etc/group information are collected
-+-a always,exit -F path=/etc/group -F perm=wa
++-a always,exit -F arch=b64 -F path=/etc/group -F perm=wa -k identity
 +# 6.2.3.13 Ensure events that modify /etc/passwd information are collected
-+-a always,exit -F path=/etc/passwd -F perm=wa
++-a always,exit -F arch=b64 -F path=/etc/passwd -F perm=wa -k identity
 +# 6.2.3.14 Ensure events that modify /etc/shadow and /etc/gshadow are collected
-+-a always,exit -F path=/etc/gshadow -F perm=wa
-+-a always,exit -F path=/etc/shadow -F perm=wa
++-a always,exit -F arch=b64 -F path=/etc/gshadow -F perm=wa -k identity
++-a always,exit -F arch=b64 -F path=/etc/shadow -F perm=wa -k identity
 
 changed: [debian-srv] => (item=50-identity)
 --- before
-+++ after: /home/ansibleuser/.ansible/tmp/ansible-local-143561m229y9/tmpu4ju3p7v/50-scope.rules.j2
++++ after: /home/ansibleuser/.ansible/tmp/ansible-local-5065t7636_vw/tmpyjd_vihn/50-scope.rules.j2
 @@ -0,0 +1,3 @@
 +# 6.2.3.1 Ensure modification of the /etc/sudoers file is collected
-+-a always,exit -F path=/etc/sudoers -F perm=wa
-+-a always,exit -F dir=/etc/sudoers.d -F perm=wa
++-a always,exit -F arch=b64 -F path=/etc/sudoers -F perm=wa -k scope
++-a always,exit -F arch=b64 -F dir=/etc/sudoers.d -F perm=wa -k scope
 
 changed: [debian-srv] => (item=50-scope)
 
@@ -235,5 +240,5 @@ RUNNING HANDLER [audit : Load auditd rules] ************************************
 ok: [debian-srv]
 
 PLAY RECAP *********************************************************************
-debian-srv                 : ok=31   changed=13   unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+debian-srv                 : ok=31   changed=14   unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
 
