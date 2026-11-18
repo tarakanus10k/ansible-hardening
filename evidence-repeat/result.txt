@@ -1,0 +1,1 @@
+PASS: changed=0, failed=0, unreachable=0. Снимки проверяемого состояния совпадают.
