@@ -1,16 +1,13 @@
 #!/usr/bin/env bash
-# Independent, read-only audit of selected CIS Debian Linux 13 v1.1.0 controls.
-# Scope: tarakanus10k/ansible-hardening, f73582a416ba21067ef943f1bcb820e966029e8c.
-# Runtime: Bash 5 + standard Debian utilities. No Python, HTML or JSON.
-# Exit: 0 all PASS; 1 at least one FAIL/REVIEW/ERROR; 2 invocation/transport error.
 set -uo pipefail
 export PATH=/usr/sbin:/usr/bin:/sbin:/bin LC_ALL=C
 umask 077
-VERSION=5.0-bash
+VERSION=5.1-bash
 REPO=f73582a416ba21067ef943f1bcb820e966029e8c
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 SCRIPT=$SCRIPT_DIR/$(basename -- "${BASH_SOURCE[0]}")
 WORK='' REPORT='' REMOTE='' PORT=22 IDENTITY=''
+MODE=audit
 declare -a CONTEXTS=()
 
 usage() {
@@ -31,6 +28,9 @@ usage() {
   --ssh HOST          SSH alias или user@host. Отчёт скачивается локально.
   --port NUMBER       Порт SSH (по умолчанию 22).
   --identity FILE     Приватный SSH-ключ на локальной машине.
+  --snapshot          Снимок контрольных сумм и состояния для повторного прогона.
+  --boot-evidence     Параметры GRUB, boot_id и состояние AppArmor.
+                      Снимки локальны на ВМ. Без --output печатаются в stdout.
   --ssh-context STR  Дополнительный контекст sshd -T -C; можно повторять.
                      Пример: user=test,host=debian-srv,addr=192.168.100.20
   --help              Эта справка.
@@ -439,10 +439,89 @@ perform() {
     } >> "$REPORT" || die 'Не удалось дописать отчёт'
     printf '%-12s %-5s %s\n' "$id" "$result" "$status"
 }
-run_local() {
+target_check() {
     (( EUID == 0 )) || die 'Запустите через sudo или от root'
     [[ -r /etc/os-release ]] || die 'Нет /etc/os-release'
     grep -Eq '^ID="?debian"?$' /etc/os-release && grep -Eq '^VERSION_ID="?13"?$' /etc/os-release || die 'Скрипт предназначен для Debian 13'
+}
+
+target_versions() {
+    printf 'kernel=%s\n' "$(uname -r)"
+    dpkg-query -W -f='${Package}=${Version}\n' \
+        bash python3 openssh-server sudo sudo-rs libpam-runtime libpam-modules \
+        pamtester auditd audispd-plugins libaudit1 apparmor apparmor-utils \
+        grub-common grub2-common systemd openscap-scanner ssg-debian 2>/dev/null || :
+}
+
+snapshot() {
+    local file meta hash rules
+    local -a paths=(
+        /etc/ssh/sshd_config /etc/ssh/sshd_config.d
+        /etc/pam.d/common-* /usr/share/pam-configs /var/cache/debconf/config.dat
+        /etc/sudoers /etc/sudoers.d /etc/nsswitch.conf
+        /etc/audit/audit.rules /etc/audit/rules.d
+        /etc/default/grub /etc/default/grub.d /boot/grub/grub.cfg
+        /etc/sysctl.conf /etc/sysctl.d
+    )
+    printf 'HOST=%s\nBOOT_ID=%s\n' "$(hostname)" "$(cat /proc/sys/kernel/random/boot_id)"
+    find "${paths[@]}" -print0 > "$WORK/paths" 2>"$WORK/find.err"
+    # Missing optional paths are recorded explicitly. Other errors invalidate the comparison.
+    if grep -v 'No such file or directory$' "$WORK/find.err" >&2; then return 2; fi
+    for file in "${paths[@]}"; do
+        [[ -e $file || -L $file ]] || printf 'ABSENT %q\n' "$file"
+    done
+    sort -zu "$WORK/paths" > "$WORK/paths.sorted" || return 2
+    while IFS= read -r -d '' file; do
+        meta=$(stat -c '%F;%a;%u;%g' -- "$file") || return 2
+        hash='-'
+        if [[ -L $file ]]; then
+            printf 'LINK %q -> %q\n' "$file" "$(readlink -- "$file")"
+        fi
+        if [[ -f $file ]]; then
+            hash=$(sha256sum < "$file") || return 2
+            hash=${hash%% *}
+        fi
+        printf 'FILE %q %s %s\n' "$file" "$meta" "$hash"
+    done < "$WORK/paths.sorted"
+    rules=$(cmd auditctl -l 2>&1) || { printf '%s\n' "$rules" >&2; return 2; }
+    printf 'AUDIT_RULES_SHA256='
+    printf '%s\n' "$rules" | sha256sum | awk '{print $1}'
+    if [[ -r /proc/sys/kernel/apparmor_restrict_unprivileged_unconfined ]]; then
+        printf 'APPARMOR_SYSCTL=%s\n' "$(cat /proc/sys/kernel/apparmor_restrict_unprivileged_unconfined)"
+    else printf 'APPARMOR_SYSCTL=absent\n'; fi
+    target_versions
+}
+
+boot_evidence() {
+    local f rc
+    printf 'HOST=%s\nTIME=%s\nBOOT_ID=%s\n' "$(hostname)" "$(date --iso-8601=seconds)" "$(cat /proc/sys/kernel/random/boot_id)"
+    printf 'CMDLINE=%s\n' "$(cat /proc/cmdline)"
+    for f in /etc/default/grub /etc/default/grub.d/*.cfg /boot/grub/grub.cfg; do
+        [[ -f $f ]] || continue
+        printf '\n[%s]\n' "$f"
+        grep -En '^[[:space:]]*((export[[:space:]]+)?GRUB_CMDLINE_LINUX|linux(efi|16)?[[:space:]])' "$f"
+        rc=$?
+        (( rc <= 1 )) || return 2
+    done
+    check_apparmor_enabled
+    rc=$?
+    printf '\nAPPARMOR_CHECK_RC=%s\n' "$rc"
+    return "$rc"
+}
+
+run_evidence() {
+    target_check
+    WORK=$(mktemp -d /tmp/cis-bash.XXXXXXXXXX) || die 'mktemp'
+    trap cleanup EXIT
+    if [[ -n $REPORT ]]; then
+        (set -o noclobber; : > "$REPORT") || die 'Не удалось создать отчёт'
+        exec > "$REPORT"
+    fi
+    case $MODE in snapshot) snapshot;; boot) boot_evidence;; esac
+}
+
+run_local() {
+    target_check
     WORK=$(mktemp -d /tmp/cis-bash.XXXXXXXXXX) || die 'mktemp'
     trap cleanup EXIT
     trap 'exit 2' HUP INT TERM
@@ -457,6 +536,8 @@ run_local() {
         printf 'true = PASS. false = FAIL (нарушение), REVIEW (не доказано), ERROR (сбой).\n'
         printf 'Конфигурация не изменяется. SSH: состояние на диске; auditd: диск и ядро.\n'
         printf 'Актуальность PAM: локальный кэш APT. Настройки inventory автоматически не читаются.\n'
+        printf 'Версии на проверяемом хосте:\n'
+        target_versions
     } >> "$REPORT" || die 'Не удалось записать заголовок'
     perform 1.3.1.1 'Установлены apparmor и apparmor-utils' 161 check_packages apparmor apparmor-utils
     perform 1.3.1.2 'AppArmor включён, служба активна, профили загружены' 163 check_apparmor_enabled
@@ -525,6 +606,10 @@ main() {
     while (( $# )); do
         case $1 in
             --help|-h) usage; return 0;;
+            --snapshot|--boot-evidence)
+                [[ $MODE == audit ]] || die 'Выберите один режим'
+                case $1 in --snapshot) MODE=snapshot;; *) MODE=boot;; esac
+                shift;;
             --output|--ssh|--port|--identity|--ssh-context)
                 (( $# >= 2 )) && [[ -n $2 ]] || die "Нет значения для $1"
                 case $1 in
@@ -535,6 +620,11 @@ main() {
         esac
     done
     [[ $PORT =~ ^[0-9]{1,5}$ ]] && (( 10#$PORT >= 1 && 10#$PORT <= 65535 )) || die 'Некорректный порт'
+    if [[ $MODE != audit ]]; then
+        [[ -z $REMOTE && -z $IDENTITY && $PORT == 22 && ${#CONTEXTS[@]} == 0 ]] || die 'Режим снимков запускается локально'
+        run_evidence
+        return $?
+    fi
     [[ -n $REPORT ]] || REPORT="cis-debian13-$(date +%Y%m%d-%H%M%S)-$$.txt"
     [[ $REPORT == /* ]] || REPORT=$PWD/$REPORT
     if [[ -n $REMOTE ]]; then remote_run
