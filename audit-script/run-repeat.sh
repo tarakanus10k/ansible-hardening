@@ -1,72 +1,100 @@
 #!/usr/bin/env bash
-# Run on the Ansible controller. Applies the playbook twice.
+# Запускать на управляющей машине после первого применения playbooks/site.yml.
 set -euo pipefail
 umask 077
-if (( $# < 1 )); then
-    echo 'Usage: bash tests/run-repeat.sh NEW_REPORT_DIR [ansible options]' >&2
-    exit 2
-fi
-output=$(realpath -m -- "$1")
+
+usage() {
+    printf 'Использование: bash audit-script/run-repeat.sh НОВАЯ_ПАПКА [параметры ansible-playbook]\n'
+}
+
+if [[ ${1:-} == --help || ${1:-} == -h ]]; then usage; exit 0; fi
+if (( $# < 1 )); then usage >&2; exit 2; fi
+report=$(realpath -m -- "$1")
 shift
 for arg in "$@"; do
     case $arg in
-        -C|--check|--tags|--tags=*|-t*|--skip-tags|--skip-tags=*|--step|--start-at-task|--start-at-task=*)
-            echo "Option incompatible with measuring a complete run: $arg" >&2
-            exit 2;;
+        -C|--check|--check=*|-t*|--tags|--tags=*|--skip-tags|--skip-tags=*|--step|--start-at-task|--start-at-task=*|--list-*|--syntax-check|--version|--help|-h)
+            printf 'Для проверки нужен полный прогон. Недопустимый параметр: %s\n' "$arg" >&2
+            exit 2 ;;
     esac
 done
+
 repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$repo"
-export ANSIBLE_NOCOLOR=1 LC_ALL=C
-mkdir -- "$output"
+for file in audit-script/verify-repeat.yml audit-script/snapshot-state.sh playbooks/site.yml; do
+    [[ -r $file ]] || { printf 'Нет доступного файла: %s\n' "$file" >&2; exit 2; }
+done
+command -v ansible-playbook >/dev/null || { printf 'Не найден ansible-playbook.\n' >&2; exit 2; }
+mkdir -m 700 -- "$report" || exit 2
+export CIS_REPEAT_REPORT_DIR="$report" ANSIBLE_STDOUT_CALLBACK=default ANSIBLE_NOCOLOR=1 LC_ALL=C.UTF-8
+unset ANSIBLE_FORCE_COLOR
+
+finish() {
+    printf '%s\n' "$2" | tee "$report/result.txt"
+    printf 'Журналы: %s\n' "$report"
+    exit "$1"
+}
 
 record_sources() {
-    git rev-parse HEAD
-    find ansible.cfg playbooks roles audit-script inventory tests -type f \
-        ! -path '*/__pycache__/*' ! -name '*.pyc' \
-        ! -path 'tests/*.log' ! -path 'tests/*.txt' -print0 |
+    if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then git rev-parse HEAD; fi
+    local -a inputs=("$repo/playbooks" "$repo/roles" "$repo/audit-script")
+    [[ ! -f $repo/ansible.cfg ]] || inputs+=("$repo/ansible.cfg")
+    [[ ! -d $repo/inventory ]] || inputs+=("$repo/inventory")
+    find "${inputs[@]}" -path "$report" -prune -o -type f \
+        ! -path '*/__pycache__/*' ! -name '*.pyc' -print0 |
         sort -z | xargs -0 -r sha256sum
 }
-record_sources > "$output/sources-before.txt"
+
 {
-    printf 'Controller time: %s\n' "$(date --iso-8601=seconds)"
-    printf 'Kernel: %s\n' "$(uname -r)"
-    git status --porcelain
-    ansible --version
-    ansible-galaxy collection list
-    ssh -V
-    git --version
-    printf 'Source manifest SHA256: '
-    sha256sum < "$output/sources-before.txt"
-} > "$output/versions.txt" 2>&1
+    printf 'Начало UTC: %s\n' "$(date -u +%FT%TZ)"
+    ansible-playbook --version
+} > "$report/versions.txt" 2>&1 || finish 2 'ERROR: не удалось собрать сведения о запуске.'
+record_sources > "$report/sources-before.txt" || finish 2 'ERROR: не удалось снять контрольные суммы исходников.'
 
-ansible-playbook playbooks/site.yml "$@" --diff 2>&1 | tee "$output/ansible-run01.log"
-record_sources > "$output/sources-between.txt"
-cmp -s "$output/sources-before.txt" "$output/sources-between.txt" || {
-    echo 'Controller sources changed during the first run.' >&2
-    exit 2
-}
+# Единственное применение site.yml находится между двумя снимками.
+if ! ansible-playbook audit-script/verify-repeat.yml "$@" --diff 2>&1 | tee "$report/ansible-repeat.log"; then
+    finish 2 'ERROR: Ansible завершился с ошибкой. Подробности в ansible-repeat.log.'
+fi
+record_sources > "$report/sources-after.txt" || finish 2 'ERROR: не удалось повторно снять контрольные суммы исходников.'
+cmp -s "$report/sources-before.txt" "$report/sources-after.txt" ||
+    finish 2 'ERROR: контролируемые исходники изменились во время прогона.'
 
-# Keep evidence even when the playbook assertion fails.
-set +e
-ansible-playbook tests/verify-repeat.yml "$@" --diff 2>&1 | tee "$output/ansible-run02.log"
-repeat_rc=$?
-set -e
-record_sources > "$output/sources-after.txt"
-cmp -s "$output/sources-before.txt" "$output/sources-after.txt" || {
-    echo 'Controller sources changed during the second run.' >&2
-    exit 2
-}
-if (( repeat_rc != 0 )); then exit "$repeat_rc"; fi
-awk '
-    /PLAY RECAP/ {recap=1}
-    recap && /ok=[0-9]+/ {
+shopt -s nullglob
+before=("$report"/before-*.txt)
+after=("$report"/after-*.txt)
+(( ${#before[@]} > 0 && ${#before[@]} == ${#after[@]} )) ||
+    finish 2 'ERROR: не получены полные пары снимков.'
+: > "$report/snapshot.diff"
+different=0
+for baseline in "${before[@]}"; do
+    name=${baseline##*/}
+    current=$report/after-${name#before-}
+    [[ -f $current ]] || finish 2 "ERROR: отсутствует второй снимок для $name."
+    if diff -u --label "$name" --label "${current##*/}" "$baseline" "$current" >> "$report/snapshot.diff"; then
+        continue
+    else
+        rc=$?
+        (( rc == 1 )) || finish 2 'ERROR: не удалось сравнить снимки.'
+        different=1
+    fi
+done
+
+# Требуем успешную сводку для каждого хоста с парой снимков.
+if awk -v expected="${#before[@]}" '
+    /^PLAY RECAP/ {recap=1; next}
+    recap && /[[:space:]]ok=[0-9]+/ {
         hosts++
-        if ($0 !~ /[[:space:]]changed=0([[:space:]]|$)/) bad=1
+        if ($0 !~ /[[:space:]]failed=0([[:space:]]|$)/ ||
+            $0 !~ /[[:space:]]unreachable=0([[:space:]]|$)/) errors=1
+        if ($0 !~ /[[:space:]]changed=0([[:space:]]|$)/) changes=1
     }
-    END {if (!hosts || bad) exit 1}
-' "$output/ansible-run02.log" || {
-    echo 'Repeated run did not report changed=0 for every tested host.' >&2
-    exit 1
-}
-echo 'Repeat: changed=0 and measured snapshots match.'
+    END {if (hosts != expected || errors) exit 2; if (changes) exit 1}
+' "$report/ansible-repeat.log"; then
+    (( different == 0 )) || finish 1 'FAIL: Ansible показал changed=0, но снимки состояния различаются.'
+else
+    rc=$?
+    (( rc == 1 )) || finish 2 'ERROR: сводка Ansible неполная или содержит ошибки.'
+    finish 1 'FAIL: повторный прогон Ansible зарегистрировал изменения.'
+fi
+
+finish 0 'PASS: changed=0, failed=0, unreachable=0. Снимки проверяемого состояния совпадают.'

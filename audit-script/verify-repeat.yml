@@ -1,39 +1,37 @@
 ---
-- name: Capture state after the initial hardening run
+- name: Capture state immediately before reapplying hardening
   hosts: linux_debian_13
-  become: true
   gather_facts: false
-  tasks:
-    - name: Collect baseline for the repeated run
+  become: true
+  any_errors_fatal: true
+  vars:
+    snapshot_phase: before
+  tasks: &save_snapshot
+    - name: Capture host state without changing configuration
       ansible.builtin.script:
-        cmd: ../audit-script/audit-cis-debian13-v1.1.0.sh --snapshot
+        cmd: "{{ (playbook_dir ~ '/snapshot-state.sh') | quote }}"
         executable: /bin/bash
-      register: cis_before_repeat
+      register: snapshot
       changed_when: false
-    - name: Record the baseline for each host
-      ansible.builtin.debug:
-        var: cis_before_repeat.stdout_lines
 
-- name: Repeat the same hardening play
+    - name: Save snapshot on the Ansible controller
+      ansible.builtin.copy:
+        content: "{{ 'INVENTORY_HOST=' ~ inventory_hostname ~ '\n' ~ snapshot.stdout | replace('\r\n', '\n') }}"
+        dest: "{{ lookup('ansible.builtin.env', 'CIS_REPEAT_REPORT_DIR', default=undef()) }}/{{ snapshot_phase }}-{{ inventory_hostname | hash('sha256') }}.txt"
+        mode: '0600'
+      delegate_to: localhost
+      become: false
+      diff: false
+      changed_when: false
+
+- name: Reapply the same hardening playbook once
   ansible.builtin.import_playbook: ../playbooks/site.yml
 
-- name: Compare the state after the repeated run
+- name: Capture state immediately after reapplying hardening
   hosts: linux_debian_13
-  become: true
   gather_facts: false
-  tasks:
-    - name: Collect state after the repeated run
-      ansible.builtin.script:
-        cmd: ../audit-script/audit-cis-debian13-v1.1.0.sh --snapshot
-        executable: /bin/bash
-      register: cis_after_repeat
-      changed_when: false
-    - name: Record state after the repeated run for each host
-      ansible.builtin.debug:
-        var: cis_after_repeat.stdout_lines
-    - name: Compare file hashes, permissions, owners, boot ID and active audit rules
-      ansible.builtin.assert:
-        that:
-          - cis_before_repeat.stdout_lines == cis_after_repeat.stdout_lines
-        success_msg: "Snapshots agree for the measured state."
-        fail_msg: "Snapshots differ. Compare the recorded lines for this host."
+  become: true
+  any_errors_fatal: true
+  vars:
+    snapshot_phase: after
+  tasks: *save_snapshot
