@@ -222,15 +222,15 @@ check_sudo_installed() {
 }
 
 timeout_policy() {
-    # Input is canonical sudoers emitted by cvtsudoers, not raw included files.
-    # Exit 2 for syntax outside this deliberately small numeric Defaults parser.
+    # cvtsudoers может печатать одно выражение Defaults на нескольких строках.
     awk '
-      /^[[:space:]]*($|#)/ {next}
-      !/^[[:space:]]*Defaults([[:space:]:@>!]|$)/ {
-        review=1; print "Неожиданная строка при чтении sudoers: " $0; next
-      }
-      /timestamp_timeout/ {
-        line=$0; if(line ~ /["\\]/){review=1; print "Сложная Defaults-строка: "line; next}
+      function check_defaults(line, global, token, v) {
+        if(line ~ /^[[:space:]]*($|#)/)return
+        if(line !~ /^[[:space:]]*Defaults([[:space:]:@>!]|$)/) {
+          review=1; print "Неожиданная строка при чтении sudoers: " line; return
+        }
+        if(line !~ /timestamp_timeout/)return
+        if(line ~ /["\\]/){review=1; print "Сложная Defaults-строка: "line; return}
         global=(line ~ /^[[:space:]]*Defaults[[:space:]]/)
         if(!global){review=1; print "Scoped Defaults требует проверки применимости: "line}
         sub(/#.*/,"",line)
@@ -243,7 +243,21 @@ timeout_policy() {
           line=substr(line,RSTART+RLENGTH)
         }
       }
-      END{if(bad)exit 1; if(review)exit 2;
+      {
+        line=pending $0
+        # Нечётное число обратных косых черт в конце означает продолжение.
+        if(match(line,/\\+$/) && RLENGTH%2) {
+          pending=substr(line,1,length(line)-1)
+          continued=1
+          next
+        }
+        pending=""
+        continued=0
+        check_defaults(line)
+      }
+      END{
+          if(continued){review=1; print "Незавершённое продолжение строки sudoers."}
+          if(bad)exit 1; if(review)exit 2;
           if(!count || !g){print "Нет явного глобального timestamp_timeout (0..15 минут).";exit 1}}
     '
 }
@@ -295,42 +309,42 @@ check_pam_version() {
 }
 
 check_pam_unix() {
-    local mode=$1 stack file rc failed=0 unknown=0
-    for stack in account auth password session session-noninteractive; do
-        file=/etc/pam.d/common-$stack
+    local mode=$1 file rc missing=0
+    local -a files=(/etc/pam.d/common-{account,auth,password,session,session-noninteractive})
+    # Сопоставляем имя модуля в его поле, пропуская комментарии и аргументы других модулей.
+    local pam_unix='^\h*-?(?:account|auth|password|session)\h+(?:\[[^#\]\r\n]+\]|[^#\h]+)\h+(?:[^#\h]+/)?pam_unix\.so(?=\h|#|$)'
+
+    for file in "${files[@]}"; do
         if [[ ! -f $file ]]; then
             printf 'Отсутствует: %s\n' "$file"
-            failed=1
-            continue
-        fi
-        if [[ ! -r $file ]]; then
+            missing=1
+        elif [[ ! -r $file ]]; then
             printf 'Не удалось прочитать: %s\n' "$file"
-            unknown=1
-            continue
+            return 2
         fi
-        run awk -v mode="$mode" '
-            /^[[:blank:]]*#/ {next}
-            {
-                sub(/[[:blank:]]*#.*/, "")
-                for (i=1; i<=NF; i++) {
-                    if ($i !~ /(^|\/)pam_unix\.so$/) continue
-                    found=1
-                    print FNR ":" $0
-                    for (j=i+1; j<=NF; j++) if ($j=="nullok") bad=1
-                    break
-                }
-            }
-            END {if (mode=="enabled") exit !found; exit bad}
-        ' "$file"
+    done
+    (( missing == 0 )) || return 1
+
+    if [[ $mode == nullok ]]; then
+        run grep -PH -- "$pam_unix"'\h+(?:[^#\r\n]*\h+)?nullok(?=\h|#|$)' "${files[@]}"
         rc=$?
         case $rc in
-            0) ;;
-            1) failed=1 ;;
-            *) unknown=1 ;;
+            0) return 1 ;;  # Найдено запрещённое значение.
+            1) printf 'Аргумент nullok в активных строках pam_unix не найден.\n'; return 0 ;;
+            *) return 2 ;;
         esac
+    fi
+
+    run grep -PH -- "$pam_unix" "${files[@]}"
+    rc=$?
+    (( rc <= 1 )) || return 2
+    for file in "${files[@]}"; do
+        if [[ $'\n'$output != *$'\n'"$file:"* ]]; then
+            printf 'Нет активной строки pam_unix: %s\n' "$file"
+            missing=1
+        fi
     done
-    (( failed == 0 )) || return 1
-    (( unknown == 0 )) || return 2
+    return "$missing"
 }
 
 # Linux Audit: сверяем постоянные правила с правилами, загруженными в ядро.
