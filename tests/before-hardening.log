@@ -1,6 +1,6 @@
 Debian 13 | CIS Benchmark v1.1.0 | 20 выбранных правил
 Хост: debian-srv
-Время: 2026-11-18T19:23:25+03:00
+Время: 2026-11-18T20:21:47+03:00
 
 [1.3.1.1] Пакеты AppArmor
 $ dpkg-query -W -f=\$\{db:Status-Status\}\\n apparmor
@@ -81,9 +81,8 @@ $ visudo -c
 /etc/sudoers: parsed OK
 /etc/sudoers.d/README: parsed OK
 $ cvtsudoers -c /dev/null -i sudoers -f sudoers -d all -s aliases\,privileges /etc/sudoers
-Неожиданная строка при чтении sudoers: Defaults\
-Неожиданная строка при чтении sudoers:     secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin
-Результат: REVIEW
+Нет явного глобального timestamp_timeout (0..15 минут).
+Результат: FAIL
 
 [5.3.1.1] Актуальная версия libpam-runtime по локальному кэшу APT
 $ dpkg-query -W -f=\$\{db:Status-Status\}\\n libpam-runtime
@@ -102,29 +101,17 @@ libpam-runtime:
 Результат: PASS
 
 [5.3.2.1] pam_unix в пяти common-стеках
-$ awk -v mode=enabled $'\n            /^[[:blank:]]*#/ {next}\n            {\n                sub(/[[:blank:]]*#.*/, "")\n                for (i=1; i<=NF; i++) {\n                    if ($i !~ /(^|\\/)pam_unix\\.so$/) continue\n                    found=1\n                    print FNR ":" $0\n                    for (j=i+1; j<=NF; j++) if ($j=="nullok") bad=1\n                    break\n                }\n            }\n            END {if (mode=="enabled") exit !found; exit bad}\n        ' /etc/pam.d/common-account
-17:account	[success=1 new_authtok_reqd=done default=ignore]	pam_unix.so 
-$ awk -v mode=enabled $'\n            /^[[:blank:]]*#/ {next}\n            {\n                sub(/[[:blank:]]*#.*/, "")\n                for (i=1; i<=NF; i++) {\n                    if ($i !~ /(^|\\/)pam_unix\\.so$/) continue\n                    found=1\n                    print FNR ":" $0\n                    for (j=i+1; j<=NF; j++) if ($j=="nullok") bad=1\n                    break\n                }\n            }\n            END {if (mode=="enabled") exit !found; exit bad}\n        ' /etc/pam.d/common-auth
-17:auth	[success=1 default=ignore]	pam_unix.so nullok
-$ awk -v mode=enabled $'\n            /^[[:blank:]]*#/ {next}\n            {\n                sub(/[[:blank:]]*#.*/, "")\n                for (i=1; i<=NF; i++) {\n                    if ($i !~ /(^|\\/)pam_unix\\.so$/) continue\n                    found=1\n                    print FNR ":" $0\n                    for (j=i+1; j<=NF; j++) if ($j=="nullok") bad=1\n                    break\n                }\n            }\n            END {if (mode=="enabled") exit !found; exit bad}\n        ' /etc/pam.d/common-password
-25:password	[success=1 default=ignore]	pam_unix.so obscure yescrypt
-$ awk -v mode=enabled $'\n            /^[[:blank:]]*#/ {next}\n            {\n                sub(/[[:blank:]]*#.*/, "")\n                for (i=1; i<=NF; i++) {\n                    if ($i !~ /(^|\\/)pam_unix\\.so$/) continue\n                    found=1\n                    print FNR ":" $0\n                    for (j=i+1; j<=NF; j++) if ($j=="nullok") bad=1\n                    break\n                }\n            }\n            END {if (mode=="enabled") exit !found; exit bad}\n        ' /etc/pam.d/common-session
-25:session	required	pam_unix.so 
-$ awk -v mode=enabled $'\n            /^[[:blank:]]*#/ {next}\n            {\n                sub(/[[:blank:]]*#.*/, "")\n                for (i=1; i<=NF; i++) {\n                    if ($i !~ /(^|\\/)pam_unix\\.so$/) continue\n                    found=1\n                    print FNR ":" $0\n                    for (j=i+1; j<=NF; j++) if ($j=="nullok") bad=1\n                    break\n                }\n            }\n            END {if (mode=="enabled") exit !found; exit bad}\n        ' /etc/pam.d/common-session-noninteractive
-26:session	required	pam_unix.so 
+$ grep -PH -- \^\\h\*-\?\(\?:account\|auth\|password\|session\)\\h+\(\?:\\\[\[\^#\\\]\\r\\n\]+\\\]\|\[\^#\\h\]+\)\\h+\(\?:\[\^#\\h\]+/\)\?pam_unix\\.so\(\?=\\h\|#\|\$\) /etc/pam.d/common-account /etc/pam.d/common-auth /etc/pam.d/common-password /etc/pam.d/common-session /etc/pam.d/common-session-noninteractive
+/etc/pam.d/common-account:account	[success=1 new_authtok_reqd=done default=ignore]	pam_unix.so 
+/etc/pam.d/common-auth:auth	[success=1 default=ignore]	pam_unix.so nullok
+/etc/pam.d/common-password:password	[success=1 default=ignore]	pam_unix.so obscure yescrypt
+/etc/pam.d/common-session:session	required	pam_unix.so 
+/etc/pam.d/common-session-noninteractive:session	required	pam_unix.so 
 Результат: PASS
 
 [5.3.3.4.1] pam_unix без nullok
-$ awk -v mode=nullok $'\n            /^[[:blank:]]*#/ {next}\n            {\n                sub(/[[:blank:]]*#.*/, "")\n                for (i=1; i<=NF; i++) {\n                    if ($i !~ /(^|\\/)pam_unix\\.so$/) continue\n                    found=1\n                    print FNR ":" $0\n                    for (j=i+1; j<=NF; j++) if ($j=="nullok") bad=1\n                    break\n                }\n            }\n            END {if (mode=="enabled") exit !found; exit bad}\n        ' /etc/pam.d/common-account
-17:account	[success=1 new_authtok_reqd=done default=ignore]	pam_unix.so 
-$ awk -v mode=nullok $'\n            /^[[:blank:]]*#/ {next}\n            {\n                sub(/[[:blank:]]*#.*/, "")\n                for (i=1; i<=NF; i++) {\n                    if ($i !~ /(^|\\/)pam_unix\\.so$/) continue\n                    found=1\n                    print FNR ":" $0\n                    for (j=i+1; j<=NF; j++) if ($j=="nullok") bad=1\n                    break\n                }\n            }\n            END {if (mode=="enabled") exit !found; exit bad}\n        ' /etc/pam.d/common-auth
-17:auth	[success=1 default=ignore]	pam_unix.so nullok
-$ awk -v mode=nullok $'\n            /^[[:blank:]]*#/ {next}\n            {\n                sub(/[[:blank:]]*#.*/, "")\n                for (i=1; i<=NF; i++) {\n                    if ($i !~ /(^|\\/)pam_unix\\.so$/) continue\n                    found=1\n                    print FNR ":" $0\n                    for (j=i+1; j<=NF; j++) if ($j=="nullok") bad=1\n                    break\n                }\n            }\n            END {if (mode=="enabled") exit !found; exit bad}\n        ' /etc/pam.d/common-password
-25:password	[success=1 default=ignore]	pam_unix.so obscure yescrypt
-$ awk -v mode=nullok $'\n            /^[[:blank:]]*#/ {next}\n            {\n                sub(/[[:blank:]]*#.*/, "")\n                for (i=1; i<=NF; i++) {\n                    if ($i !~ /(^|\\/)pam_unix\\.so$/) continue\n                    found=1\n                    print FNR ":" $0\n                    for (j=i+1; j<=NF; j++) if ($j=="nullok") bad=1\n                    break\n                }\n            }\n            END {if (mode=="enabled") exit !found; exit bad}\n        ' /etc/pam.d/common-session
-25:session	required	pam_unix.so 
-$ awk -v mode=nullok $'\n            /^[[:blank:]]*#/ {next}\n            {\n                sub(/[[:blank:]]*#.*/, "")\n                for (i=1; i<=NF; i++) {\n                    if ($i !~ /(^|\\/)pam_unix\\.so$/) continue\n                    found=1\n                    print FNR ":" $0\n                    for (j=i+1; j<=NF; j++) if ($j=="nullok") bad=1\n                    break\n                }\n            }\n            END {if (mode=="enabled") exit !found; exit bad}\n        ' /etc/pam.d/common-session-noninteractive
-26:session	required	pam_unix.so 
+$ grep -PH -- \^\\h\*-\?\(\?:account\|auth\|password\|session\)\\h+\(\?:\\\[\[\^#\\\]\\r\\n\]+\\\]\|\[\^#\\h\]+\)\\h+\(\?:\[\^#\\h\]+/\)\?pam_unix\\.so\(\?=\\h\|#\|\$\)\\h+\(\?:\[\^#\\r\\n\]\*\\h+\)\?nullok\(\?=\\h\|#\|\$\) /etc/pam.d/common-account /etc/pam.d/common-auth /etc/pam.d/common-password /etc/pam.d/common-session /etc/pam.d/common-session-noninteractive
+/etc/pam.d/common-auth:auth	[success=1 default=ignore]	pam_unix.so nullok
 Результат: FAIL
 
 [6.2.1.1] Установлены auditd и audispd-plugins
@@ -161,4 +148,4 @@ $ auditctl -s
 ./audit.sh: line 13: auditctl: command not found
 Результат: REVIEW
 
-Итого: PASS=5 FAIL=10 REVIEW=5
+Итого: PASS=5 FAIL=11 REVIEW=4
