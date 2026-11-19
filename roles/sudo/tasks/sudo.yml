@@ -12,7 +12,6 @@
   ansible.builtin.package:
     name:
       - sudo
-      - sudo-rs
     state: present
 
 # 5.2.5 Ensure re-authentication for privilege escalation is not disabled globally
