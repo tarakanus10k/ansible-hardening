@@ -1,7 +1,8 @@
 ---
 # 5.3.1.1 Ensure latest version of pam is installed
-# 5.3.2.1 Ensure pam_unix module is enabled
-# 5.3.3.4.1 Ensure pam_unix does not include nullok
+# 5.3.2.2 Ensure pam_faillock module is enabled
+# 5.3.3.1.1 Ensure password failed attempts lockout is configured
+# 5.3.3.1.2 Ensure password unlock time is configured
 
 # ---
 
@@ -14,31 +15,80 @@
     update_cache: true
     cache_valid_time: 3600
 
-# 5.3.2.1 Ensure pam_unix module is enabled
-- name: "5.3.2.1 Ensure pam_unix module is enabled"
-  when: deb13cis_rule_5_3_2_1
-  ansible.builtin.command: pam-auth-update --enable unix
-  changed_when: false
+# 5.3.2.2 Ensure pam_faillock module is enabled
+- name: "5.3.2.2 Ensure pam_faillock module is enabled"
+  when: deb13cis_rule_5_3_2_2
+  notify:
+    - Enable faillock
+    - Enable faillock notify
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/usr/share/pam-configs/{{ item }}"
+    owner: root
+    group: root
+    mode: 0600
+  loop:
+    - faillock
+    - faillock_notify
 
-# 5.3.3.4.1 Ensure pam_unix does not include nullok
-- name: "5.3.3.4.1 Ensure pam_unix does not include nullok"
-  when: deb13cis_rule_5_3_3_4_1
+# 5.3.3.1.1 Ensure password failed attempts lockout is configured
+- name: "5.3.3.1.1 Ensure password failed attempts lockout is configured"
+  when: deb13cis_rule_5_3_3_1_1
   block:
-    - name: "5.3.3.4.1 | find nullok"
+    - name: "5.3.3.1.1 | find deny=<N>"
       ansible.builtin.shell: |
         set -o pipefail
-        grep -E "pam_unix.so.*nullok" /etc/pam.d/common-* /usr/share/pam-configs/* | cut -d ':' -f1 | uniq
+        grep -Pl -- '\bpam_faillock\.so\h+([^#\n\r]+\h+)?deny\b' /usr/share/pam-configs/*
       args:
         executable: /bin/bash
       changed_when: false
-      failed_when: discovered_pam_unix_nullok.rc not in [ 0, 1 ]
-      register: discovered_pam_unix_nullok
-
-    - name: "5.3.3.4.1 | delete nullok"
-      when: discovered_pam_unix_nullok.stdout | length > 0
+      failed_when: discovered_faillock_deny_files.rc not in [ 0, 1 ]
+      register: discovered_faillock_deny_files
+    
+    - name: "5.3.3.1.1 | delete deny=<N>"
+      when: discovered_faillock_deny_files.stdout | length > 0
       ansible.builtin.replace:
-        path: "{{ item }}"
-        regexp: '(?<=\s)nullok(?=\s|$)'
-        replace: ''
-      loop: "{{ discovered_pam_unix_nullok.stdout_lines }}"
-      notify: Update pam unix
+        path: "{{ item.path }}"
+        regexp: '^([^#\n]*\bpam_faillock\.so[ \t]+[^#\n]*?)\bdeny[ \t]*=[ \t]*[^ \t#\n]+'
+        replace: '\1'
+      loop: "{{ discovered_faillock_deny_files.files }}"
+
+    - name: "5.3.3.1.1 | edit /etc/security/faillock.conf"
+      ansible.builtin.lineinfile:
+        path: /etc/security/faillock.conf
+        regexp: '^[ \t]*#?[ \t]*deny[ \t]*='
+        line: "deny = 3"
+        owner: root
+        group: root
+        mode: 0600
+
+# 5.3.3.1.2 Ensure password unlock time is configured
+- name: "5.3.3.1.2 Ensure password unlock time is configured"
+  when: deb13cis_rule_5_3_3_1_2
+  block:
+    - name: "5.3.3.1.2  | find unlock_time=<N>"
+      ansible.builtin.shell: |
+        set -o pipefail
+        grep -Pl -- '\bpam_faillock\.so\h+([^#\n\r]+\h+)?unlock_time\b' /usr/share/pam-configs/*
+      args:
+        executable: /bin/bash
+      changed_when: false
+      failed_when: discovered_faillock_unlock_files.rc not in [ 0, 1 ]
+      register: discovered_faillock_unlock_files
+
+    - name: "5.3.3.1.2  | delete unlock_time=<N>"
+      when: discovered_faillock_unlock_files.stdout | length > 0
+      ansible.builtin.replace:
+        path: "{{ item.path }}"
+        regexp: '^([^#\n]*\bpam_faillock\.so[ \t]+[^#\n]*?)\bunlock_time[ \t]*=[ \t]*[^ \t#\n]+'
+        replace: '\1'
+      loop: "{{ discovered_faillock_unlock_files.files }}"
+
+    - name: "5.3.3.1.2 | edit /etc/security/faillock.conf"
+      ansible.builtin.lineinfile:
+        path: /etc/security/faillock.conf
+        regexp: '^[ \t]*#?[ \t]*unlock_time[ \t]*='
+        line: "unlock_time = 900"
+        owner: root
+        group: root
+        mode: 0600
