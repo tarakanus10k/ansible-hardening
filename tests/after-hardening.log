@@ -1,6 +1,6 @@
 Debian 13 | CIS Benchmark v1.1.0 | 20 выбранных правил
 Хост: debian-srv
-Время: 2026-11-19T16:36:22+03:00
+Время: 2026-11-19T17:06:44+03:00
 
 [5.1.1] Права файлов sshd_config
 $ stat -Lc %a\ %u\ %g /etc/ssh/sshd_config
@@ -193,7 +193,7 @@ active
 $ auditctl -s
 enabled 1
 failure 1
-pid 3684
+pid 3586
 rate_limit 0
 backlog_limit 8192
 lost 0
@@ -221,7 +221,7 @@ loaded: -a always,exit -F arch=b32 -S open,creat,link,unlink,mknod,chmod,lchown,
 $ auditctl -s
 enabled 1
 failure 1
-pid 3684
+pid 3586
 rate_limit 0
 backlog_limit 8192
 lost 0
@@ -245,7 +245,7 @@ loaded: -a always,exit -F arch=b32 -S open,creat,link,unlink,mknod,chmod,lchown,
 $ auditctl -s
 enabled 1
 failure 1
-pid 3684
+pid 3586
 rate_limit 0
 backlog_limit 8192
 lost 0
@@ -269,7 +269,7 @@ loaded: -a always,exit -F arch=b32 -S open,creat,link,unlink,mknod,chmod,lchown,
 $ auditctl -s
 enabled 1
 failure 1
-pid 3684
+pid 3586
 rate_limit 0
 backlog_limit 8192
 lost 0
