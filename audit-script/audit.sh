@@ -231,6 +231,9 @@ check_su_restricted() {
     while IFS= read -r line; do
         line=${line#*:}
         line=${line%%#*}
+        # Стандартные @include common-* не являются auth-правилами PAM.
+        # Они не должны влиять на определение порядка pam_wheel.
+        if grep -Pq '^\h*@include\h+' <<< "$line"; then continue; fi
         if grep -Pq '^\h*-?auth\h+sufficient\h+(\S*/)?pam_rootok\.so\h*$' <<< "$line"; then continue; fi
         if grep -Pq "$prefix" <<< "$line"; then
             local use_uid=0 bad=0
