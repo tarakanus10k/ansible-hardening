@@ -112,7 +112,8 @@ check_ssh_directory() {
 check_ssh_option() {
     local key=$1 value
     if ! capture sshd -T; then printf '%s\n' "$output"; return 2; fi
-    value=$(awk -v key="$key" '$1 == key {print $2; exit}' <<< "$output")
+    run grep -E "^${key}[[:blank:]]+" <<< "$output" || return 2
+    read -r _ value <<< "$output"
     printf '%s = %s\n' "$key" "${value:-не найдено}"
     [[ -n $value ]] || return 2
     case $key in
@@ -141,44 +142,57 @@ check_sudo_installed() {
 
 # На входе — Defaults, развёрнутые cvtsudoers, включая @include/@includedir.
 sudo_policy() {
-    awk -v mode="$1" '
-      function inspect(line, global, token, value) {
-        if(line ~ /^[[:space:]]*($|#)/)return
-        if(line !~ /^[[:space:]]*Defaults([[:space:]:@>!]|$)/){review=1; return}
-        if(mode=="authenticate" && line !~ /authenticate/)return
-        if(mode=="timeout" && line !~ /timestamp_timeout/)return
-        if(line ~ /["\\]/){review=1; print "Сложная Defaults-строка: "line; return}
-        sub(/#.*/, "", line)
-        print line
-        if(mode=="authenticate") {
-          if(line ~ /(^|[[:space:],])!authenticate([[:space:],]|$)/)bad=1
-          return
-        }
-        global=(line ~ /^[[:space:]]*Defaults[[:space:]]/)
-        if(!global)review=1
-        if(line ~ /(^|[[:space:],])!timestamp_timeout([[:space:],]|$)/)review=1
-        while(match(line,/(^|[[:space:],])timestamp_timeout[[:space:]]*=[[:space:]]*[^,[:space:]]+/)) {
-          token=substr(line,RSTART,RLENGTH)
-          value=token; sub(/^.*=[[:space:]]*/, "", value)
-          if(value !~ /^[-+]?[0-9]+([.][0-9]+)?$/)review=1
-          else {if(global)found=1; if(value+0<0 || value+0>15)bad=1}
-          line=substr(line,RSTART+RLENGTH)
-        }
-      }
-      {
-        line=pending $0
-        if(match(line,/\\+$/) && RLENGTH%2){pending=substr(line,1,length(line)-1); next}
-        pending=""; inspect(line)
-      }
-      END {
-        if(bad)exit 1
-        if(pending!="" || review)exit 2
-        if(mode=="timeout" && !found) {
-          print "Нет явного глобального timestamp_timeout; проверьте значение по умолчанию sudo -V."
-          exit 2
-        }
-      }
-    '
+    local mode=$1 line pending='' policy='' tail token value rc
+    local review=0 bad=0 found=0
+    # Сначала соединяем продолжения Defaults, чтобы grep видел всю настройку.
+    while IFS= read -r line || [[ -n $line ]]; do
+        line=$pending$line
+        tail=${line##*[^\\]}
+        if (( ${#tail} % 2 )); then pending=${line%\\}; continue; fi
+        pending=''
+        policy+=$line$'\n'
+    done
+    [[ -z $pending ]] || review=1
+    while IFS= read -r line; do
+        line=${line%%#*}
+        [[ $line =~ ^[[:blank:]]*$ ]] && continue
+        if [[ ! $line =~ ^[[:blank:]]*Defaults([[:blank:]:@\>!]|$) ]]; then review=1; fi
+    done <<< "$policy"
+    local option=authenticate
+    [[ $mode != timeout ]] || option=timestamp_timeout
+    run grep -E "^[[:blank:]]*Defaults([[:blank:]:@>!])[^#]*\\b${option}\\b" <<< "$policy"
+    rc=$?
+    (( rc <= 1 )) || return 2
+    policy=$output
+    while IFS= read -r line; do
+        [[ -n $line ]] || continue
+        line=${line%%#*}
+        if [[ $line == *\"* || $line == *\\* ]]; then review=1; continue; fi
+        if [[ $mode == authenticate ]]; then
+            if grep -Eq '(^|[[:blank:],])!authenticate([[:blank:],]|$)' <<< "$line"; then bad=1; fi
+            continue
+        fi
+        [[ $line =~ ^[[:blank:]]*Defaults[[:blank:]] ]] || review=1
+        if grep -Eq '(^|[[:blank:],])!timestamp_timeout([[:blank:],]|$)' <<< "$line"; then review=1; fi
+        local tokens
+        tokens=$(grep -Eo '(^|[[:blank:],])timestamp_timeout[[:blank:]]*=[[:blank:]]*[^,[:blank:]]+' <<< "$line")
+        while IFS= read -r token; do
+            [[ -n $token ]] || continue
+            value=${token#*=}
+            value=${value//[[:blank:]]/}
+            if [[ ! $value =~ ^[-+]?[0-9]+([.][0-9]+)?$ ]]; then review=1; continue; fi
+            [[ ! $line =~ ^[[:blank:]]*Defaults[[:blank:]] ]] || found=1
+            # Разрешены 0..15 минут, включая дробные значения.
+            if ! grep -Eq '^\+?0*(([0-9]|1[0-4])([.][0-9]+)?|15([.]0+)?)$|^-0+([.]0+)?$' <<< "$value"; then bad=1; fi
+        done <<< "$tokens"
+    done <<< "$policy"
+    (( bad == 0 )) || return 1
+    if [[ $mode == timeout && $found == 0 ]]; then
+        printf 'Нет явного глобального timestamp_timeout; проверьте значение по умолчанию sudo -V.\n'
+        review=1
+    fi
+    if (( review )); then printf 'Неоднозначная политика Defaults требует ручной проверки.\n'; return 2; fi
+    return 0
 }
 
 check_sudo_policy() {
@@ -197,39 +211,47 @@ check_sudo_policy() {
     fi
     policy=$output
     sudo_policy "$mode" <<< "$policy" || return $?
-    run awk '/^[[:blank:]]*sudoers[[:blank:]]*:/ {sub(/#.*/, ""); print}' /etc/nsswitch.conf || return 2
-    nss='^[[:blank:]]*sudoers[[:blank:]]*:[[:blank:]]*files[[:blank:]]*$'
+    local rc
+    run grep -E '^[[:blank:]]*sudoers[[:blank:]]*:' /etc/nsswitch.conf
+    rc=$?
+    (( rc <= 1 )) || return 2
+    nss='^[[:blank:]]*sudoers[[:blank:]]*:[[:blank:]]*files[[:blank:]]*(#.*)?$'
     if [[ -n $output && ! $output =~ $nss ]]; then
         printf 'Внешний источник sudoers требует ручной проверки.\n'; return 2
     fi
 }
 
 check_su_restricted() {
-    local group name password gid members
+    local group='' name password gid members lines line token prior=0 review=0 found=0
+    local prefix='^\h*-?auth\h+(required|requisite)\h+(\S*/)?pam_wheel\.so\b'
+    local -a args
     [[ -f /etc/pam.d/su ]] || return 1
-    run awk '
-      {sub(/#.*/, "")}
-      $1=="@include" {prior=1}
-      $1=="auth" || $1=="-auth" {
-        # Стандартный обход для root не разрешает su обычным пользователям.
-        if($2=="sufficient" && $3 ~ /(^|\/)pam_rootok[.]so$/ && NF==3)next
-        if(($2=="required" || $2=="requisite") && $3 ~ /(^|\/)pam_wheel[.]so$/) {
-          group=""; use_uid=0; bad=0
-          for(i=4;i<=NF;i++) {
-            if($i=="use_uid")use_uid=1
-            else if($i ~ /^group=/){group=$i; sub(/^group=/,"",group)}
-            else if($i!="debug")bad=1
-          }
-          if(group!="" && use_uid && !bad) {
-            if(prior)review=1
-            else {print group; found=1; exit}
-          }
-        }
+    run grep -Pn '^\h*(-?auth|@include)\h+' /etc/pam.d/su || return $?
+    lines=$output
+    while IFS= read -r line; do
+        line=${line#*:}
+        line=${line%%#*}
+        if grep -Pq '^\h*-?auth\h+sufficient\h+(\S*/)?pam_rootok\.so\h*$' <<< "$line"; then continue; fi
+        if grep -Pq "$prefix" <<< "$line"; then
+            local use_uid=0 bad=0
+            group=''
+            read -r -a args <<< "$line"
+            for token in "${args[@]:3}"; do
+                case $token in use_uid) use_uid=1 ;; group=*) group=${token#*=} ;; debug) ;; *) bad=1 ;; esac
+            done
+            if [[ -n $group && $use_uid == 1 && $bad == 0 ]]; then
+                if (( prior )); then review=1; else found=1; break; fi
+            fi
+        fi
         prior=1
-      }
-      END {if(!found){if(review)exit 2; exit 1}}
-    ' /etc/pam.d/su || return $?
-    group=$output
+    done <<< "$lines"
+    if (( ! found )); then
+        if (( review )); then
+            printf 'Перед pam_wheel есть auth-строки или Include: проверьте порядок PAM-стека.\n'
+            return 2
+        fi
+        return 1
+    fi
     run getent group "$group"
     case $? in 0) ;; 2) return 1 ;; *) return 2 ;; esac
     [[ $output != *$'\n'* ]] || return 2
@@ -237,9 +259,13 @@ check_su_restricted() {
     [[ $name == "$group" && $gid =~ ^[0-9]+$ ]] || return 2
     [[ -z $members ]] || return 1
     capture getent passwd || return 2
-    if awk -F: -v gid="$gid" '$4==gid {found=1; print $1} END {exit !found}' <<< "$output"; then
+    local rc
+    run grep -E "^[^:]+:[^:]*:[0-9]+:${gid}:" <<< "$output"
+    rc=$?
+    if (( rc == 0 )); then
         printf 'Найдены пользователи с основным GID ограничивающей группы.\n'; return 1
     fi
+    (( rc == 1 )) || return 2
     printf 'pam_wheel включён, группа %s пуста.\n' "$group"
 }
 
@@ -249,66 +275,72 @@ check_pam_version() {
     run dpkg-query -W '-f=${Version}\n' libpam-runtime || return 2
     installed=$output
     run apt-cache policy libpam-runtime || return 2
-    candidate=$(awk '$1=="Candidate:" {print $2; exit}' <<< "$output")
+    run grep -E '^[[:blank:]]*Candidate:[[:blank:]]+' <<< "$output" || return 2
+    read -r _ candidate <<< "$output"
     printf 'Установлено: %s; кандидат локального кэша APT: %s.\n' "$installed" "${candidate:-не найден}"
     [[ -n $installed && -n $candidate && $candidate != '(none)' ]] || return 2
     [[ $installed == "$candidate" ]]
 }
 
 check_pam_faillock() {
+    local control='(\[[^]#]+\]|\S+)'
+    local module='(\S*/)?pam_faillock\.so(?=\h|#|$)'
+    local stage file type pattern lines line number pre=0 fail=0 account=0 review=0 rc
     [[ -f /etc/pam.d/common-auth && -f /etc/pam.d/common-account ]] || return 1
     check_packages libpam-modules || return $?
-    run awk '
-      {
-        sub(/#.*/, ""); type=$1
-        if(type=="@include" || $2=="include" || $2=="substack")review=1
-        if(type!="auth" && type!="account")next
-        line=$0
-        sub(/^[[:space:]]*[^[:space:]]+[[:space:]]+/, "", line)
-        control=line
-        if(line ~ /^\[/) {
-          sub(/\].*$/, "]", control)
-          sub(/^\[[^]]+\][[:space:]]+/, "", line)
-        } else {
-          sub(/[[:space:]].*$/, "", control)
-          sub(/^[^[:space:]]+[[:space:]]+/, "", line)
-        }
-        n=split(line,args,/[[:space:]]+/)
-        if(args[1] !~ /(^|\/)pam_faillock[.]so$/) {
-          if(control=="sufficient" && ((type=="auth" && !pre) || (type=="account" && !account)))review=1
-          next
-        }
-        print FILENAME ":" FNR ": " $0
-        if(type=="account") {
-          if(control=="required" || control=="requisite")account=1
-          else review=1
-          next
-        }
-        for(i=2;i<=n;i++) {
-          if(args[i]=="preauth") {
-            pre=FNR
-            if(control!="required" && control!="requisite")review=1
-          }
-          if(args[i]=="authfail") {
-            fail=FNR
-            if(control!="required" && control!="requisite" && control!="[default=die]")review=1
-          }
-        }
-      }
-      END {if(!pre || !fail || !account || pre>=fail)exit 1; if(review)exit 2}
-    ' /etc/pam.d/common-auth /etc/pam.d/common-account
+    for stage in preauth authfail account; do
+        file=/etc/pam.d/common-auth type=auth
+        [[ $stage != account ]] || { file=/etc/pam.d/common-account; type=account; }
+        pattern="^\\h*-?${type}\\h+${control}\\h+${module}"
+        [[ $stage == account ]] || pattern+="\\h+([^#]*\\h+)?${stage}(?=\\h|#|$)"
+        run grep -Pn "$pattern" "$file" || return $?
+        lines=$output
+        # Несколько реализаций одной стадии требуют проверки потока управления.
+        [[ $lines != *$'\n'* ]] || review=1
+        line=${lines%%$'\n'*}
+        number=${line%%:*}
+        line=${line#*:}
+        case $stage in
+            preauth) pre=$number ;;
+            authfail) fail=$number ;;
+            account) account=$number ;;
+        esac
+        pattern="^\\h*-?${type}\\h+(required|requisite)\\h+"
+        [[ $stage != authfail ]] || pattern='^\h*-?auth\h+(required|requisite|\[default=die\])\h+'
+        if ! grep -Pq "$pattern" <<< "$line"; then review=1; fi
+    done
+    (( pre < fail )) || return 1
+    for file in /etc/pam.d/common-auth /etc/pam.d/common-account; do
+        run grep -Pn '^\h*(@include\b|-?(auth|account)\h+(include|substack)\b)' "$file"
+        rc=$?
+        case $rc in 0) review=1 ;; 1) ;; *) return 2 ;; esac
+        run grep -Pn '^\h*-?(auth|account)\h+sufficient\h+' "$file"
+        rc=$?
+        (( rc <= 1 )) || return 2
+        while IFS= read -r line; do
+            [[ -n $line ]] || continue
+            number=${line%%:*}
+            if [[ $file == /etc/pam.d/common-auth ]]; then
+                (( number >= pre )) || review=1
+            else
+                (( number >= account )) || review=1
+            fi
+        done <<< "$output"
+    done
+    if (( review )); then printf 'Нестандартный PAM-стек требует ручной проверки.\n'; return 2; fi
+    return 0
 }
 
 check_faillock_option() {
-    local key=$1 value
+    local key=$1 value line lines token rc review=0
     check_pam_faillock || return $?
     [[ -f /etc/security/faillock.conf ]] || return 1
-    run awk -F= -v key="$key" '
-      {sub(/#.*/, ""); name=$1; gsub(/[[:space:]]/, "", name)}
-      name==key {value=$2; gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)}
-      END {print value}
-    ' /etc/security/faillock.conf || return 2
-    value=$output
+    run grep -P "^\h*${key}\h*=" /etc/security/faillock.conf || return $?
+    line=${output##*$'\n'}
+    value=${line#*=}
+    value=${value%%#*}
+    value="${value#"${value%%[![:space:]]*}"}"
+    value="${value%"${value##*[![:space:]]}"}"
     printf '%s = %s\n' "$key" "${value:-не задано}"
     [[ $value =~ ^[0-9]{1,9}$ ]] || return 1
     case $key in
@@ -317,27 +349,31 @@ check_faillock_option() {
         *) return 2 ;;
     esac
     # Аргументы активных PAM-строк имеют приоритет над faillock.conf.
-    run awk -v key="$key" '
-      {
-        sub(/#.*/, "")
-        if($0 !~ /^[[:space:]]*(auth|account)[[:space:]]+/)next
-        line=$0
-        sub(/^[[:space:]]*[^[:space:]]+[[:space:]]+(\[[^]]+\]|[^[:space:]]+)[[:space:]]+/, "", line)
-        n=split(line,args,/[[:space:]]+/)
-        if(args[1] !~ /(^|\/)pam_faillock[.]so$/)next
-        for(i=2;i<=n;i++) {
-          if(args[i] ~ /^conf=/){print "Отдельная конфигурация: "args[i]; review=1}
-          if(args[i] ~ ("^"key"=")) {
-            value=args[i]; sub(/^[^=]*=/, "", value)
-            print FILENAME ":" FNR ": "args[i]
-            if(value !~ /^[0-9]+$/)bad=1
-            else if(key=="deny" && (value+0<1 || value+0>5))bad=1
-            else if(key=="unlock_time" && value+0!=0 && value+0<900)bad=1
-          }
-        }
-      }
-      END {if(bad)exit 1; if(review)exit 2}
-    ' /etc/pam.d/common-auth /etc/pam.d/common-account
+    local pam='^\h*-?(auth|account)\h+(\[[^]#]+\]|\S+)\h+(\S*/)?pam_faillock\.so\h+'
+    run grep -Ph "${pam}[^#]*\\b(${key}|conf)=" /etc/pam.d/common-auth /etc/pam.d/common-account
+    rc=$?
+    (( rc <= 1 )) || return 2
+    lines=$output
+    while IFS= read -r line; do
+        line=${line%%#*}
+        [[ -n $line ]] || continue
+        local tokens
+        tokens=$(grep -Po "(?<!\\S)(${key}|conf)=\\S*" <<< "$line")
+        while IFS= read -r token; do
+            [[ -n $token ]] || continue
+            if [[ $token == conf=* ]]; then
+                printf 'Отдельная конфигурация: %s\n' "$token"; review=1; continue
+            fi
+            value=${token#*=}
+            [[ $value =~ ^[0-9]{1,9}$ ]] || return 1
+            case $key in
+                deny) (( 10#$value >= 1 && 10#$value <= 5 )) || return 1 ;;
+                unlock_time) (( 10#$value == 0 || 10#$value >= 900 )) || return 1 ;;
+            esac
+        done <<< "$tokens"
+    done <<< "$lines"
+    (( review == 0 )) || return 2
+    return 0
 }
 
 # libaudit 4.0.2 может разворачивать perm=wa в список системных вызовов.
