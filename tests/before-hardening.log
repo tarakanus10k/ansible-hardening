@@ -1,6 +1,6 @@
 Debian 13 | CIS Benchmark v1.1.0 | 20 выбранных правил
 Хост: debian-srv
-Время: 2026-11-19T12:05:05+03:00
+Время: 2026-11-19T15:25:21+03:00
 
 [5.1.1] Права файлов sshd_config
 $ stat -Lc %a\ %u\ %g /etc/ssh/sshd_config
@@ -52,7 +52,8 @@ $ visudo -c
 /etc/sudoers: parsed OK
 /etc/sudoers.d/README: parsed OK
 $ cvtsudoers -c /dev/null -i sudoers -f sudoers -d all -s aliases\,privileges /etc/sudoers
-Результат: REVIEW
+$ awk /\^\[\[:blank:\]\]\*sudoers\[\[:blank:\]\]\*:/\ \{sub\(/#.\*/\,\ \"\"\)\;\ print\} /etc/nsswitch.conf
+Результат: PASS
 
 [5.2.6] timestamp_timeout от 0 до 15 минут
 $ dpkg-query -W -f=\$\{db:Status-Status\}\\n sudo
@@ -65,11 +66,11 @@ $ visudo -c
 /etc/sudoers: parsed OK
 /etc/sudoers.d/README: parsed OK
 $ cvtsudoers -c /dev/null -i sudoers -f sudoers -d all -s aliases\,privileges /etc/sudoers
-Нет явного глобального timestamp_timeout (0..15 минут).
-Результат: FAIL
+Нет явного глобального timestamp_timeout; проверьте значение по умолчанию sudo -V.
+Результат: REVIEW
 
 [5.2.7] Доступ к su ограничен пустой группой
-$ awk $'\n      {sub(/#.*/, "")}\n      $1=="@include" {prior=1}\n      $1=="auth" || $1=="-auth" {\n        if(($2=="required" || $2=="requisite") && $3 ~ /(^|\\/)pam_wheel[.]so$/) {\n          group=""; use_uid=0; bad=0\n          for(i=4;i<=NF;i++) {\n            if($i=="use_uid")use_uid=1\n            else if($i ~ /^group=/){group=$i; sub(/^group=/,"",group)}\n            else bad=1\n          }\n          if(group!="" && use_uid && !bad) {\n            if(prior)review=1\n            else {print group; found=1; exit}\n          }\n        }\n        prior=1\n      }\n      END {if(!found){if(review)exit 2; exit 1}}\n    ' /etc/pam.d/su
+$ awk $'\n      {sub(/#.*/, "")}\n      $1=="@include" {prior=1}\n      $1=="auth" || $1=="-auth" {\n        # \320\241\321\202\320\260\320\275\320\264\320\260\321\200\321\202\320\275\321\213\320\271 \320\276\320\261\321\205\320\276\320\264 \320\264\320\273\321\217 root \320\275\320\265 \321\200\320\260\320\267\321\200\320\265\321\210\320\260\320\265\321\202 su \320\276\320\261\321\213\321\207\320\275\321\213\320\274 \320\277\320\276\320\273\321\214\320\267\320\276\320\262\320\260\321\202\320\265\320\273\321\217\320\274.\n        if($2=="sufficient" && $3 ~ /(^|\\/)pam_rootok[.]so$/ && NF==3)next\n        if(($2=="required" || $2=="requisite") && $3 ~ /(^|\\/)pam_wheel[.]so$/) {\n          group=""; use_uid=0; bad=0\n          for(i=4;i<=NF;i++) {\n            if($i=="use_uid")use_uid=1\n            else if($i ~ /^group=/){group=$i; sub(/^group=/,"",group)}\n            else if($i!="debug")bad=1\n          }\n          if(group!="" && use_uid && !bad) {\n            if(prior)review=1\n            else {print group; found=1; exit}\n          }\n        }\n        prior=1\n      }\n      END {if(!found){if(review)exit 2; exit 1}}\n    ' /etc/pam.d/su
 Результат: FAIL
 
 [5.3.1.1] Актуальная версия libpam-runtime по локальному кэшу APT
@@ -85,25 +86,25 @@ libpam-runtime:
  *** 1.7.0-5 500
         500 http://deb.debian.org/debian trixie/main amd64 Packages
         100 /var/lib/dpkg/status
-Установленная версия: 1.7.0-5. Кандидат из локального кэша APT: 1.7.0-5.
+Установлено: 1.7.0-5; кандидат локального кэша APT: 1.7.0-5.
 Результат: PASS
 
 [5.3.2.2] pam_faillock включён в auth и account
 $ dpkg-query -W -f=\$\{db:Status-Status\}\\n libpam-modules
 installed
-$ awk $'\n      {\n        sub(/#.*/, "")\n        type=$1\n        if(type=="@include" || $2=="include" || $2=="substack")review=1\n        if(type!="auth" && type!="account")next\n        line=$0\n        sub(/^[[:space:]]*[^[:space:]]+[[:space:]]+/, "", line)\n        control=line\n        if(line ~ /^\\[/) {\n          sub(/\\].*$/, "]", control)\n          sub(/^\\[[^]]+\\][[:space:]]+/, "", line)\n        } else {\n          sub(/[[:space:]].*$/, "", control)\n          sub(/^[^[:space:]]+[[:space:]]+/, "", line)\n        }\n        n=split(line,args,/[[:space:]]+/)\n        if(args[1] !~ /(^|\\/)pam_faillock[.]so$/) {\n          if(type=="auth" && !pre && control=="sufficient")review=1\n          next\n        }\n        print FILENAME ":" FNR ": " $0\n        if(type=="account") {\n          if(control=="required" || control=="requisite")account=1\n          else review=1\n          next\n        }\n        for(i=2;i<=n;i++) {\n          if(args[i]=="preauth") {\n            pre=FNR\n            if(control!="required" && control!="requisite")review=1\n          }\n          if(args[i]=="authfail") {\n            fail=FNR\n            if(control!="required" && control!="requisite" && control!="[default=die]")review=1\n          }\n        }\n      }\n      END {\n        if(!pre || !fail || !account || pre>=fail)exit 1\n        if(review)exit 2\n      }\n    ' /etc/pam.d/common-auth /etc/pam.d/common-account
+$ awk $'\n      {\n        sub(/#.*/, ""); type=$1\n        if(type=="@include" || $2=="include" || $2=="substack")review=1\n        if(type!="auth" && type!="account")next\n        line=$0\n        sub(/^[[:space:]]*[^[:space:]]+[[:space:]]+/, "", line)\n        control=line\n        if(line ~ /^\\[/) {\n          sub(/\\].*$/, "]", control)\n          sub(/^\\[[^]]+\\][[:space:]]+/, "", line)\n        } else {\n          sub(/[[:space:]].*$/, "", control)\n          sub(/^[^[:space:]]+[[:space:]]+/, "", line)\n        }\n        n=split(line,args,/[[:space:]]+/)\n        if(args[1] !~ /(^|\\/)pam_faillock[.]so$/) {\n          if(control=="sufficient" && ((type=="auth" && !pre) || (type=="account" && !account)))review=1\n          next\n        }\n        print FILENAME ":" FNR ": " $0\n        if(type=="account") {\n          if(control=="required" || control=="requisite")account=1\n          else review=1\n          next\n        }\n        for(i=2;i<=n;i++) {\n          if(args[i]=="preauth") {\n            pre=FNR\n            if(control!="required" && control!="requisite")review=1\n          }\n          if(args[i]=="authfail") {\n            fail=FNR\n            if(control!="required" && control!="requisite" && control!="[default=die]")review=1\n          }\n        }\n      }\n      END {if(!pre || !fail || !account || pre>=fail)exit 1; if(review)exit 2}\n    ' /etc/pam.d/common-auth /etc/pam.d/common-account
 Результат: FAIL
 
 [5.3.3.1.1] Блокировка после 1–5 неудачных попыток
 $ dpkg-query -W -f=\$\{db:Status-Status\}\\n libpam-modules
 installed
-$ awk $'\n      {\n        sub(/#.*/, "")\n        type=$1\n        if(type=="@include" || $2=="include" || $2=="substack")review=1\n        if(type!="auth" && type!="account")next\n        line=$0\n        sub(/^[[:space:]]*[^[:space:]]+[[:space:]]+/, "", line)\n        control=line\n        if(line ~ /^\\[/) {\n          sub(/\\].*$/, "]", control)\n          sub(/^\\[[^]]+\\][[:space:]]+/, "", line)\n        } else {\n          sub(/[[:space:]].*$/, "", control)\n          sub(/^[^[:space:]]+[[:space:]]+/, "", line)\n        }\n        n=split(line,args,/[[:space:]]+/)\n        if(args[1] !~ /(^|\\/)pam_faillock[.]so$/) {\n          if(type=="auth" && !pre && control=="sufficient")review=1\n          next\n        }\n        print FILENAME ":" FNR ": " $0\n        if(type=="account") {\n          if(control=="required" || control=="requisite")account=1\n          else review=1\n          next\n        }\n        for(i=2;i<=n;i++) {\n          if(args[i]=="preauth") {\n            pre=FNR\n            if(control!="required" && control!="requisite")review=1\n          }\n          if(args[i]=="authfail") {\n            fail=FNR\n            if(control!="required" && control!="requisite" && control!="[default=die]")review=1\n          }\n        }\n      }\n      END {\n        if(!pre || !fail || !account || pre>=fail)exit 1\n        if(review)exit 2\n      }\n    ' /etc/pam.d/common-auth /etc/pam.d/common-account
+$ awk $'\n      {\n        sub(/#.*/, ""); type=$1\n        if(type=="@include" || $2=="include" || $2=="substack")review=1\n        if(type!="auth" && type!="account")next\n        line=$0\n        sub(/^[[:space:]]*[^[:space:]]+[[:space:]]+/, "", line)\n        control=line\n        if(line ~ /^\\[/) {\n          sub(/\\].*$/, "]", control)\n          sub(/^\\[[^]]+\\][[:space:]]+/, "", line)\n        } else {\n          sub(/[[:space:]].*$/, "", control)\n          sub(/^[^[:space:]]+[[:space:]]+/, "", line)\n        }\n        n=split(line,args,/[[:space:]]+/)\n        if(args[1] !~ /(^|\\/)pam_faillock[.]so$/) {\n          if(control=="sufficient" && ((type=="auth" && !pre) || (type=="account" && !account)))review=1\n          next\n        }\n        print FILENAME ":" FNR ": " $0\n        if(type=="account") {\n          if(control=="required" || control=="requisite")account=1\n          else review=1\n          next\n        }\n        for(i=2;i<=n;i++) {\n          if(args[i]=="preauth") {\n            pre=FNR\n            if(control!="required" && control!="requisite")review=1\n          }\n          if(args[i]=="authfail") {\n            fail=FNR\n            if(control!="required" && control!="requisite" && control!="[default=die]")review=1\n          }\n        }\n      }\n      END {if(!pre || !fail || !account || pre>=fail)exit 1; if(review)exit 2}\n    ' /etc/pam.d/common-auth /etc/pam.d/common-account
 Результат: FAIL
 
 [5.3.3.1.2] Разблокировка через 900 секунд или вручную
 $ dpkg-query -W -f=\$\{db:Status-Status\}\\n libpam-modules
 installed
-$ awk $'\n      {\n        sub(/#.*/, "")\n        type=$1\n        if(type=="@include" || $2=="include" || $2=="substack")review=1\n        if(type!="auth" && type!="account")next\n        line=$0\n        sub(/^[[:space:]]*[^[:space:]]+[[:space:]]+/, "", line)\n        control=line\n        if(line ~ /^\\[/) {\n          sub(/\\].*$/, "]", control)\n          sub(/^\\[[^]]+\\][[:space:]]+/, "", line)\n        } else {\n          sub(/[[:space:]].*$/, "", control)\n          sub(/^[^[:space:]]+[[:space:]]+/, "", line)\n        }\n        n=split(line,args,/[[:space:]]+/)\n        if(args[1] !~ /(^|\\/)pam_faillock[.]so$/) {\n          if(type=="auth" && !pre && control=="sufficient")review=1\n          next\n        }\n        print FILENAME ":" FNR ": " $0\n        if(type=="account") {\n          if(control=="required" || control=="requisite")account=1\n          else review=1\n          next\n        }\n        for(i=2;i<=n;i++) {\n          if(args[i]=="preauth") {\n            pre=FNR\n            if(control!="required" && control!="requisite")review=1\n          }\n          if(args[i]=="authfail") {\n            fail=FNR\n            if(control!="required" && control!="requisite" && control!="[default=die]")review=1\n          }\n        }\n      }\n      END {\n        if(!pre || !fail || !account || pre>=fail)exit 1\n        if(review)exit 2\n      }\n    ' /etc/pam.d/common-auth /etc/pam.d/common-account
+$ awk $'\n      {\n        sub(/#.*/, ""); type=$1\n        if(type=="@include" || $2=="include" || $2=="substack")review=1\n        if(type!="auth" && type!="account")next\n        line=$0\n        sub(/^[[:space:]]*[^[:space:]]+[[:space:]]+/, "", line)\n        control=line\n        if(line ~ /^\\[/) {\n          sub(/\\].*$/, "]", control)\n          sub(/^\\[[^]]+\\][[:space:]]+/, "", line)\n        } else {\n          sub(/[[:space:]].*$/, "", control)\n          sub(/^[^[:space:]]+[[:space:]]+/, "", line)\n        }\n        n=split(line,args,/[[:space:]]+/)\n        if(args[1] !~ /(^|\\/)pam_faillock[.]so$/) {\n          if(control=="sufficient" && ((type=="auth" && !pre) || (type=="account" && !account)))review=1\n          next\n        }\n        print FILENAME ":" FNR ": " $0\n        if(type=="account") {\n          if(control=="required" || control=="requisite")account=1\n          else review=1\n          next\n        }\n        for(i=2;i<=n;i++) {\n          if(args[i]=="preauth") {\n            pre=FNR\n            if(control!="required" && control!="requisite")review=1\n          }\n          if(args[i]=="authfail") {\n            fail=FNR\n            if(control!="required" && control!="requisite" && control!="[default=die]")review=1\n          }\n        }\n      }\n      END {if(!pre || !fail || !account || pre>=fail)exit 1; if(review)exit 2}\n    ' /etc/pam.d/common-auth /etc/pam.d/common-account
 Результат: FAIL
 
 [6.2.1.1] Установлены auditd и audispd-plugins
@@ -116,28 +117,26 @@ dpkg-query: no packages found matching audispd-plugins
 [6.2.1.2] auditd включён и активен
 $ systemctl is-enabled auditd.service
 not-found
-$ systemctl is-active auditd.service
-inactive
 Результат: FAIL
 
 [6.2.3.1] Аудит изменений sudoers и sudoers.d
 $ auditctl -s
-audit.sh: line 13: auditctl: command not found
+audit.sh: line 14: auditctl: command not found
 Результат: REVIEW
 
 [6.2.3.12] Аудит изменений /etc/group
 $ auditctl -s
-audit.sh: line 13: auditctl: command not found
+audit.sh: line 14: auditctl: command not found
 Результат: REVIEW
 
 [6.2.3.13] Аудит изменений /etc/passwd
 $ auditctl -s
-audit.sh: line 13: auditctl: command not found
+audit.sh: line 14: auditctl: command not found
 Результат: REVIEW
 
 [6.2.3.14] Аудит изменений /etc/shadow и /etc/gshadow
 $ auditctl -s
-audit.sh: line 13: auditctl: command not found
+audit.sh: line 14: auditctl: command not found
 Результат: REVIEW
 
-Итого: PASS=3 FAIL=12 REVIEW=5
+Итого: PASS=4 FAIL=11 REVIEW=5

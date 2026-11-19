@@ -99,7 +99,7 @@ ok: [debian-srv]
 
 TASK [pam : 5.3.2.2 Ensure pam_faillock module is enabled] *********************
 --- before
-+++ after: /home/ansibleuser/.ansible/tmp/ansible-local-375_idrkwx8/tmp82d_vu8e/faillock.j2
++++ after: /home/ansibleuser/.ansible/tmp/ansible-local-10747le_e4jk/tmprxfot6ae/faillock.j2
 @@ -0,0 +1,6 @@
 +Name: Enable pam_faillock to deny access
 +Default: yes
@@ -111,7 +111,7 @@ TASK [pam : 5.3.2.2 Ensure pam_faillock module is enabled] *********************
 
 changed: [debian-srv] => (item=faillock)
 --- before
-+++ after: /home/ansibleuser/.ansible/tmp/ansible-local-375_idrkwx8/tmpzvyvuhpk/faillock_notify.j2
++++ after: /home/ansibleuser/.ansible/tmp/ansible-local-10747le_e4jk/tmpz331_nsh/faillock_notify.j2
 @@ -0,0 +1,9 @@
 +Name: Notify of failed login attempts and reset count upon success
 +Default: yes
@@ -247,7 +247,7 @@ ok: [debian-srv]
 
 TASK [audit : Deploy auditd rules] *********************************************
 --- before
-+++ after: /home/ansibleuser/.ansible/tmp/ansible-local-375_idrkwx8/tmp6i4gidgl/50-identity.rules.j2
++++ after: /home/ansibleuser/.ansible/tmp/ansible-local-10747le_e4jk/tmpsdapkxhv/50-identity.rules.j2
 @@ -0,0 +1,7 @@
 +# 6.2.3.12 Ensure events that modify /etc/group information are collected
 +-a always,exit -F arch=b64 -F path=/etc/group -F perm=wa -k identity
@@ -259,7 +259,7 @@ TASK [audit : Deploy auditd rules] *********************************************
 
 changed: [debian-srv] => (item=50-identity)
 --- before
-+++ after: /home/ansibleuser/.ansible/tmp/ansible-local-375_idrkwx8/tmpgk9s7qmq/50-scope.rules.j2
++++ after: /home/ansibleuser/.ansible/tmp/ansible-local-10747le_e4jk/tmpv7taso6a/50-scope.rules.j2
 @@ -0,0 +1,3 @@
 +# 6.2.3.1 Ensure modification of the /etc/sudoers file is collected
 +-a always,exit -F arch=b64 -F path=/etc/sudoers -F perm=wa -k scope
