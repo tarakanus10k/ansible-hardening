@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-# 20 выбранных правил ролей ssh, sudo, pam, audit для Debian 13 CIS v1.1.0.
-# Скрипт только читает настройки; кэш APT должен быть обновлён отдельно.
-# Коды выхода: 0 — все PASS, 1 — есть FAIL или REVIEW, 2 — ошибка запуска.
 set -uo pipefail
 export LC_ALL=C
 umask 077
