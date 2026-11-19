@@ -399,6 +399,11 @@ audit_match() {
     # path, path|dir, disk|loaded, ожидаемые syscalls, native arch.
     awk -v target="$1" -v field="$2" -v source="$3" -v expected="$4" -v native="$5" '
       function clean(path){sub(/\/$/,"",path); return path}
+      BEGIN {
+        # На x86_64 проверяются обе поддерживаемые архитектуры auditd.
+        # На aarch64 достаточно правила b64.
+        require_b32=(native=="c000003e")
+      }
       /^[[:space:]]*#/ || /^[[:space:]]*$/ {next}
       {
         act=""; path=""; dir=""; perm=""; arch=""; calls=""; invalid=0; watch=""
@@ -423,17 +428,33 @@ audit_match() {
         if(clean(p)!=clean(target))next
         print source ": "$0
         if(invalid || (act!="always,exit" && act!="exit,always") || perm !~ /w/ || perm !~ /a/)next
-        if(arch!="" && arch!="b64" && arch!=native)next
-        if(calls=="" || calls==",all"){found=1; next}
-        if(expected=="" || arch==""){review=1; next}
+        # Правило без архитектуры нельзя засчитать как полноценное правило.
+        if(arch!="b64" && arch!="b32") {review=1; next}
+        if(arch=="b32" && !require_b32) next
+        if(calls=="" || calls==",all") {
+          if(arch=="b64")found_b64=1; else found_b32=1
+          next
+        }
+        # Для загруженных b64-правил проверяется полный список вызовов.
+        # auditctl разворачивает perm=wa для b32 в отдельный совместимый набор,
+        # поэтому для b32 достаточно непустого списка системных вызовов.
+        if(arch=="b32") {found_b32=1; next}
+        if(expected=="") {review=1; next}
         n=split(expected,req,","); complete=1
         for(j=1;j<=n;j++)if(req[j]!="" && index(calls ",","," req[j] ",")==0)complete=0
-        if(complete)found=1
+        if(complete)found_b64=1
       }
       END {
-        if(found)exit 0
-        if(review){print "Нужна проверка списка системных вызовов."; exit 2}
-        print "Нет полного правила для "target; exit 1
+        if(!found_b64) {
+          print "Нет полного правила b64 для "target; exit 1
+        }
+        if(require_b32 && !found_b32) {
+          print "Нет полного правила b32 для "target; exit 1
+        }
+        if(review) {
+          print "Нужна проверка архитектуры или списка системных вызовов."; exit 2
+        }
+        exit 0
       }
     '
 }
