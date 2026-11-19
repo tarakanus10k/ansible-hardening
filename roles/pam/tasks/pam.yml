@@ -48,10 +48,10 @@
     - name: "5.3.3.1.1 | delete deny=<N>"
       when: discovered_faillock_deny_files.stdout | length > 0
       ansible.builtin.replace:
-        path: "{{ item.path }}"
+        path: "{{ item }}"
         regexp: '^([^#\n]*\bpam_faillock\.so[ \t]+[^#\n]*?)\bdeny[ \t]*=[ \t]*[^ \t#\n]+'
         replace: '\1'
-      loop: "{{ discovered_faillock_deny_files.files }}"
+      loop: "{{ discovered_faillock_deny_files.stdout_lines }}"
 
     - name: "5.3.3.1.1 | edit /etc/security/faillock.conf"
       ansible.builtin.lineinfile:
@@ -79,10 +79,10 @@
     - name: "5.3.3.1.2  | delete unlock_time=<N>"
       when: discovered_faillock_unlock_files.stdout | length > 0
       ansible.builtin.replace:
-        path: "{{ item.path }}"
+        path: "{{ item }}"
         regexp: '^([^#\n]*\bpam_faillock\.so[ \t]+[^#\n]*?)\bunlock_time[ \t]*=[ \t]*[^ \t#\n]+'
         replace: '\1'
-      loop: "{{ discovered_faillock_unlock_files.files }}"
+      loop: "{{ discovered_faillock_unlock_files.stdout_lines }}"
 
     - name: "5.3.3.1.2 | edit /etc/security/faillock.conf"
       ansible.builtin.lineinfile:
