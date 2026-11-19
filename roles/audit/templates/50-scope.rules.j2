@@ -2,4 +2,6 @@
 # 6.2.3.1 Ensure modification of the /etc/sudoers file is collected
 -a always,exit -F arch=b64 -F path=/etc/sudoers -F perm=wa -k scope
 -a always,exit -F arch=b64 -F dir=/etc/sudoers.d -F perm=wa -k scope
+-a always,exit -F arch=b32 -F path=/etc/sudoers -F perm=wa -k scope
+-a always,exit -F arch=b32 -F dir=/etc/sudoers.d -F perm=wa -k scope
 {% endif %}
