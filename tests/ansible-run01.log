@@ -99,7 +99,7 @@ ok: [debian-srv]
 
 TASK [pam : 5.3.2.2 Ensure pam_faillock module is enabled] *********************
 --- before
-+++ after: /home/ansibleuser/.ansible/tmp/ansible-local-3374r5x_laxa/tmppggs4lb_/faillock.j2
++++ after: /home/ansibleuser/.ansible/tmp/ansible-local-533942n7kty/tmps_mhj3jy/faillock.j2
 @@ -0,0 +1,6 @@
 +Name: Enable pam_faillock to deny access
 +Default: yes
@@ -111,7 +111,7 @@ TASK [pam : 5.3.2.2 Ensure pam_faillock module is enabled] *********************
 
 changed: [debian-srv] => (item=faillock)
 --- before
-+++ after: /home/ansibleuser/.ansible/tmp/ansible-local-3374r5x_laxa/tmp5hq2681h/faillock_notify.j2
++++ after: /home/ansibleuser/.ansible/tmp/ansible-local-533942n7kty/tmpslfmmgz3/faillock_notify.j2
 @@ -0,0 +1,9 @@
 +Name: Notify of failed login attempts and reset count upon success
 +Default: yes
@@ -179,12 +179,6 @@ changed: [debian-srv]
 TASK [sudo : 5.2.1 Ensure sudo is installed] ***********************************
 ok: [debian-srv]
 
-TASK [sudo : 5.2.5 | AUDIT] ****************************************************
-ok: [debian-srv]
-
-TASK [sudo : 5.2.5 | PATCH] ****************************************************
-skipping: [debian-srv]
-
 TASK [sudo : 5.2.6 | files with timestamp_timeout] *****************************
 ok: [debian-srv]
 
@@ -244,7 +238,7 @@ ok: [debian-srv]
 
 TASK [audit : Deploy auditd rules] *********************************************
 --- before
-+++ after: /home/ansibleuser/.ansible/tmp/ansible-local-3374r5x_laxa/tmpx6qjbaql/50-identity.rules.j2
++++ after: /home/ansibleuser/.ansible/tmp/ansible-local-533942n7kty/tmpdmjujv_b/50-identity.rules.j2
 @@ -0,0 +1,11 @@
 +# 6.2.3.12 Ensure events that modify /etc/group information are collected
 +-a always,exit -F arch=b64 -F path=/etc/group -F perm=wa -k identity
@@ -260,7 +254,7 @@ TASK [audit : Deploy auditd rules] *********************************************
 
 changed: [debian-srv] => (item=50-identity)
 --- before
-+++ after: /home/ansibleuser/.ansible/tmp/ansible-local-3374r5x_laxa/tmp9kpg_s53/50-scope.rules.j2
++++ after: /home/ansibleuser/.ansible/tmp/ansible-local-533942n7kty/tmp0o_lcrhz/50-scope.rules.j2
 @@ -0,0 +1,5 @@
 +# 6.2.3.1 Ensure modification of the /etc/sudoers file is collected
 +-a always,exit -F arch=b64 -F path=/etc/sudoers -F perm=wa -k scope
@@ -283,5 +277,5 @@ RUNNING HANDLER [audit : Load auditd rules] ************************************
 ok: [debian-srv]
 
 PLAY RECAP *********************************************************************
-debian-srv                 : ok=32   changed=17   unreachable=0    failed=0    skipped=5    rescued=0    ignored=0   
+debian-srv                 : ok=31   changed=17   unreachable=0    failed=0    skipped=4    rescued=0    ignored=0   
 

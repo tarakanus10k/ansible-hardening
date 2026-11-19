@@ -56,12 +56,6 @@ ok: [debian-srv]
 TASK [sudo : 5.2.1 Ensure sudo is installed] ***********************************
 ok: [debian-srv]
 
-TASK [sudo : 5.2.5 | AUDIT] ****************************************************
-ok: [debian-srv]
-
-TASK [sudo : 5.2.5 | PATCH] ****************************************************
-skipping: [debian-srv]
-
 TASK [sudo : 5.2.6 | files with timestamp_timeout] *****************************
 ok: [debian-srv]
 
@@ -103,5 +97,5 @@ ok: [debian-srv] => (item=50-identity)
 ok: [debian-srv] => (item=50-scope)
 
 PLAY RECAP *********************************************************************
-debian-srv                 : ok=28   changed=0    unreachable=0    failed=0    skipped=5    rescued=0    ignored=0   
+debian-srv                 : ok=27   changed=0    unreachable=0    failed=0    skipped=4    rescued=0    ignored=0   
 
