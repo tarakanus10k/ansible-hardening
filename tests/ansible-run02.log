@@ -31,17 +31,36 @@ ok: [debian-srv]
 TASK [pam : 5.3.1.1 Ensure latest version of pam is installed] *****************
 ok: [debian-srv]
 
-TASK [pam : 5.3.2.1 Ensure pam_unix module is enabled] *************************
+TASK [pam : 5.3.2.2 Ensure pam_faillock module is enabled] *********************
+ok: [debian-srv] => (item=faillock)
+ok: [debian-srv] => (item=faillock_notify)
+
+TASK [pam : 5.3.3.1.1 | find deny=<N>] *****************************************
 ok: [debian-srv]
 
-TASK [pam : 5.3.3.4.1 | find nullok] *******************************************
-ok: [debian-srv]
-
-TASK [pam : 5.3.3.4.1 | delete nullok] *****************************************
+TASK [pam : 5.3.3.1.1 | delete deny=<N>] ***************************************
 skipping: [debian-srv]
+
+TASK [pam : 5.3.3.1.1 | edit /etc/security/faillock.conf] **********************
+ok: [debian-srv]
+
+TASK [pam : 5.3.3.1.2  | find unlock_time=<N>] *********************************
+ok: [debian-srv]
+
+TASK [pam : 5.3.3.1.2  | delete unlock_time=<N>] *******************************
+skipping: [debian-srv]
+
+TASK [pam : 5.3.3.1.2 | edit /etc/security/faillock.conf] **********************
+ok: [debian-srv]
 
 TASK [sudo : 5.2.1 Ensure sudo is installed] ***********************************
 ok: [debian-srv]
+
+TASK [sudo : 5.2.5 | AUDIT] ****************************************************
+ok: [debian-srv]
+
+TASK [sudo : 5.2.5 | PATCH] ****************************************************
+skipping: [debian-srv]
 
 TASK [sudo : 5.2.6 | files with timestamp_timeout] *****************************
 ok: [debian-srv]
@@ -51,6 +70,15 @@ skipping: [debian-srv]
 
 TASK [sudo : 5.2.6 | change timestamp_timeout if >= 1] *************************
 ok: [debian-srv] => (item=/etc/sudoers)
+
+TASK [sudo : 5.2.7 | Ensure sugroup exists] ************************************
+ok: [debian-srv]
+
+TASK [sudo : 5.2.7 | remove users from group] **********************************
+ok: [debian-srv]
+
+TASK [sudo : 5.2.7 | Setting pam_wheel to use_uid] *****************************
+ok: [debian-srv]
 
 TASK [audit : 6.2.1.1 Ensure auditd packages are installed] ********************
 ok: [debian-srv]
@@ -74,28 +102,6 @@ TASK [audit : Deploy auditd rules] *********************************************
 ok: [debian-srv] => (item=50-identity)
 ok: [debian-srv] => (item=50-scope)
 
-TASK [apparmor : 1.3.1.1 Ensure apparmor packages are installed] ***************
-ok: [debian-srv]
-
-TASK [apparmor : 1.3.1.2 | find /etc/default/grub.d/*.cfg] *********************
-ok: [debian-srv]
-
-TASK [apparmor : 1.3.1.2 | remove apparmor=0] **********************************
-ok: [debian-srv] => (item=/etc/default/grub)
-
-TASK [apparmor : 1.3.1.2 | is enable and active] *******************************
-ok: [debian-srv]
-
-TASK [apparmor : 1.3.1.4 | find files] *****************************************
-ok: [debian-srv]
-
-TASK [apparmor : 1.3.1.4 | comment out files] **********************************
-skipping: [debian-srv] => (item={'path': '/etc/sysctl.d/60-kernel_sysctl.conf', 'mode': '0644', 'isdir': False, 'ischr': False, 'isblk': False, 'isreg': True, 'isfifo': False, 'islnk': False, 'issock': False, 'uid': 0, 'gid': 0, 'size': 51, 'inode': 916950, 'dev': 65024, 'nlink': 1, 'atime': 1795019385.1996047, 'mtime': 1795019385.1956043, 'ctime': 1795019385.1956043, 'gr_name': 'root', 'pw_name': 'root', 'wusr': True, 'rusr': True, 'xusr': False, 'wgrp': False, 'rgrp': True, 'xgrp': False, 'woth': False, 'roth': True, 'xoth': False, 'isuid': False, 'isgid': False, 'blocks': 8, 'disk_usage_bytes': 4096}) 
-skipping: [debian-srv]
-
-TASK [apparmor : 1.3.1.4 | Ensure kernel.apparmor_restrict_unprivileged_unconfined is enabled] ***
-ok: [debian-srv]
-
 PLAY RECAP *********************************************************************
-debian-srv                 : ok=27   changed=0    unreachable=0    failed=0    skipped=4    rescued=0    ignored=0   
+debian-srv                 : ok=28   changed=0    unreachable=0    failed=0    skipped=5    rescued=0    ignored=0   
 

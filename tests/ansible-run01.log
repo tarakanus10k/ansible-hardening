@@ -97,48 +97,96 @@ changed: [debian-srv]
 TASK [pam : 5.3.1.1 Ensure latest version of pam is installed] *****************
 ok: [debian-srv]
 
-TASK [pam : 5.3.2.1 Ensure pam_unix module is enabled] *************************
+TASK [pam : 5.3.2.2 Ensure pam_faillock module is enabled] *********************
+--- before
++++ after: /home/ansibleuser/.ansible/tmp/ansible-local-375_idrkwx8/tmp82d_vu8e/faillock.j2
+@@ -0,0 +1,6 @@
++Name: Enable pam_faillock to deny access
++Default: yes
++Priority: 0
++Auth-Type: Primary
++Auth:
++        [default=die]                   pam_faillock.so authfail
+\ No newline at end of file
+
+changed: [debian-srv] => (item=faillock)
+--- before
++++ after: /home/ansibleuser/.ansible/tmp/ansible-local-375_idrkwx8/tmpzvyvuhpk/faillock_notify.j2
+@@ -0,0 +1,9 @@
++Name: Notify of failed login attempts and reset count upon success
++Default: yes
++Priority: 1024
++Auth-Type: Primary
++Auth:
++        requisite                       pam_faillock.so preauth
++Account-Type: Primary
++Account:
++        required                        pam_faillock.so
+\ No newline at end of file
+
+changed: [debian-srv] => (item=faillock_notify)
+
+TASK [pam : 5.3.3.1.1 | find deny=<N>] *****************************************
 ok: [debian-srv]
 
-TASK [pam : 5.3.3.4.1 | find nullok] *******************************************
+TASK [pam : 5.3.3.1.1 | delete deny=<N>] ***************************************
+skipping: [debian-srv]
+
+TASK [pam : 5.3.3.1.1 | edit /etc/security/faillock.conf] **********************
+--- before: /etc/security/faillock.conf (content)
++++ after: /etc/security/faillock.conf (content)
+@@ -29,7 +29,7 @@
+ # Deny access if the number of consecutive authentication failures
+ # for this user during the recent interval exceeds n tries.
+ # The default is 3.
+-# deny = 3
++deny = 3
+ #
+ # The length of the interval during which the consecutive
+ # authentication failures must happen for the user account
+
+--- before: /etc/security/faillock.conf (file attributes)
++++ after: /etc/security/faillock.conf (file attributes)
+@@ -1,3 +1,3 @@
+ {
+-    "mode": "0644"
++    "mode": "0600"
+ }
+
+changed: [debian-srv]
+
+TASK [pam : 5.3.3.1.2  | find unlock_time=<N>] *********************************
 ok: [debian-srv]
 
-TASK [pam : 5.3.3.4.1 | delete nullok] *****************************************
---- before: /etc/pam.d/common-auth
-+++ after: /etc/pam.d/common-auth
-@@ -14,7 +14,7 @@
- # pam-auth-update(8) for details.
- 
- # here are the per-package modules (the "Primary" block)
--auth	[success=1 default=ignore]	pam_unix.so nullok
-+auth	[success=1 default=ignore]	pam_unix.so 
- # here's the fallback if no module succeeds
- auth	requisite			pam_deny.so
- # prime the stack with a positive return value if there isn't one already;
+TASK [pam : 5.3.3.1.2  | delete unlock_time=<N>] *******************************
+skipping: [debian-srv]
 
-changed: [debian-srv] => (item=/etc/pam.d/common-auth)
---- before: /usr/share/pam-configs/unix
-+++ after: /usr/share/pam-configs/unix
-@@ -3,9 +3,9 @@
- Priority: 256
- Auth-Type: Primary
- Auth:
--	[success=end default=ignore]	pam_unix.so nullok try_first_pass
-+	[success=end default=ignore]	pam_unix.so  try_first_pass
- Auth-Initial:
--	[success=end default=ignore]	pam_unix.so nullok
-+	[success=end default=ignore]	pam_unix.so 
- Account-Type: Primary
- Account:
- 	[success=end new_authtok_reqd=done default=ignore]	pam_unix.so
+TASK [pam : 5.3.3.1.2 | edit /etc/security/faillock.conf] **********************
+--- before: /etc/security/faillock.conf (content)
++++ after: /etc/security/faillock.conf (content)
+@@ -42,7 +42,7 @@
+ # will not be re-enabled without resetting the faillock
+ # entries by the `faillock` command.
+ # The default is 600 (10 minutes).
+-# unlock_time = 600
++unlock_time = 900
+ #
+ # Root account can become locked as well as regular accounts.
+ # Enabled if option is present.
 
-changed: [debian-srv] => (item=/usr/share/pam-configs/unix)
+changed: [debian-srv]
 
 TASK [sudo : 5.2.1 Ensure sudo is installed] ***********************************
 The following NEW packages will be installed:
   sudo-rs
 0 upgraded, 1 newly installed, 0 to remove and 7 not upgraded.
 changed: [debian-srv]
+
+TASK [sudo : 5.2.5 | AUDIT] ****************************************************
+ok: [debian-srv]
+
+TASK [sudo : 5.2.5 | PATCH] ****************************************************
+skipping: [debian-srv]
 
 TASK [sudo : 5.2.6 | files with timestamp_timeout] *****************************
 ok: [debian-srv]
@@ -156,6 +204,23 @@ changed: [debian-srv]
 
 TASK [sudo : 5.2.6 | change timestamp_timeout if >= 1] *************************
 skipping: [debian-srv]
+
+TASK [sudo : 5.2.7 | Ensure sugroup exists] ************************************
+changed: [debian-srv]
+
+TASK [sudo : 5.2.7 | remove users from group] **********************************
+ok: [debian-srv]
+
+TASK [sudo : 5.2.7 | Setting pam_wheel to use_uid] *****************************
+--- before: /etc/pam.d/su (content)
++++ after: /etc/pam.d/su (content)
+@@ -59,3 +59,4 @@
+ @include common-session
+ 
+ 
++auth           required        pam_wheel.so use_uid group=sugroup
+
+changed: [debian-srv]
 
 TASK [audit : 6.2.1.1 Ensure auditd packages are installed] ********************
 The following additional packages will be installed:
@@ -182,7 +247,7 @@ ok: [debian-srv]
 
 TASK [audit : Deploy auditd rules] *********************************************
 --- before
-+++ after: /home/ansibleuser/.ansible/tmp/ansible-local-6432qd6hu7xf/tmpnmziazzz/50-identity.rules.j2
++++ after: /home/ansibleuser/.ansible/tmp/ansible-local-375_idrkwx8/tmp6i4gidgl/50-identity.rules.j2
 @@ -0,0 +1,7 @@
 +# 6.2.3.12 Ensure events that modify /etc/group information are collected
 +-a always,exit -F arch=b64 -F path=/etc/group -F perm=wa -k identity
@@ -194,7 +259,7 @@ TASK [audit : Deploy auditd rules] *********************************************
 
 changed: [debian-srv] => (item=50-identity)
 --- before
-+++ after: /home/ansibleuser/.ansible/tmp/ansible-local-6432qd6hu7xf/tmpu9jylkmf/50-scope.rules.j2
++++ after: /home/ansibleuser/.ansible/tmp/ansible-local-375_idrkwx8/tmpgk9s7qmq/50-scope.rules.j2
 @@ -0,0 +1,3 @@
 +# 6.2.3.1 Ensure modification of the /etc/sudoers file is collected
 +-a always,exit -F arch=b64 -F path=/etc/sudoers -F perm=wa -k scope
@@ -202,43 +267,18 @@ changed: [debian-srv] => (item=50-identity)
 
 changed: [debian-srv] => (item=50-scope)
 
-TASK [apparmor : 1.3.1.1 Ensure apparmor packages are installed] ***************
-The following additional packages will be installed:
-  python3-apparmor python3-libapparmor
-Suggested packages:
-  vim-addon-manager
-The following NEW packages will be installed:
-  apparmor-utils python3-apparmor python3-libapparmor
-0 upgraded, 3 newly installed, 0 to remove and 7 not upgraded.
-changed: [debian-srv]
-
-TASK [apparmor : 1.3.1.2 | find /etc/default/grub.d/*.cfg] *********************
-ok: [debian-srv]
-
-TASK [apparmor : 1.3.1.2 | remove apparmor=0] **********************************
-ok: [debian-srv] => (item=/etc/default/grub)
-
-TASK [apparmor : 1.3.1.2 | is enable and active] *******************************
-ok: [debian-srv]
-
-TASK [apparmor : 1.3.1.4 | find files] *****************************************
-ok: [debian-srv]
-
-TASK [apparmor : 1.3.1.4 | comment out files] **********************************
-skipping: [debian-srv]
-
-TASK [apparmor : 1.3.1.4 | Ensure kernel.apparmor_restrict_unprivileged_unconfined is enabled] ***
-changed: [debian-srv]
-
 RUNNING HANDLER [ssh : Restart sshd] *******************************************
 changed: [debian-srv]
 
-RUNNING HANDLER [pam : Update pam unix] ****************************************
-ok: [debian-srv]
+RUNNING HANDLER [pam : Enable faillock] ****************************************
+changed: [debian-srv]
+
+RUNNING HANDLER [pam : Enable faillock notify] *********************************
+changed: [debian-srv]
 
 RUNNING HANDLER [audit : Load auditd rules] ************************************
 ok: [debian-srv]
 
 PLAY RECAP *********************************************************************
-debian-srv                 : ok=31   changed=14   unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+debian-srv                 : ok=32   changed=18   unreachable=0    failed=0    skipped=5    rescued=0    ignored=0   
 
