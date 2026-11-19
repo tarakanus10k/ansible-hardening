@@ -1,6 +1,6 @@
 Debian 13 | CIS Benchmark v1.1.0 | 20 выбранных правил
 Хост: debian-srv
-Время: 2026-11-19T15:58:28+03:00
+Время: 2026-11-19T16:36:22+03:00
 
 [5.1.1] Права файлов sshd_config
 $ stat -Lc %a\ %u\ %g /etc/ssh/sshd_config
@@ -56,14 +56,14 @@ Include /etc/ssh/sshd_config.d/*.conf
 $ dpkg-query -W -f=\$\{db:Status-Status\}\\n sudo
 installed
 $ dpkg-query -W -f=\$\{db:Status-Status\}\\n sudo-rs
-installed
+dpkg-query: no packages found matching sudo-rs
 Результат: PASS
 
 [5.2.5] Повторная аутентификация sudo не отключена глобально
 $ dpkg-query -W -f=\$\{db:Status-Status\}\\n sudo
 installed
 $ dpkg-query -W -f=\$\{db:Status-Status\}\\n sudo-rs
-installed
+dpkg-query: no packages found matching sudo-rs
 $ sudo -V
 Sudo version 1.9.16p2
 $ visudo -c
@@ -78,7 +78,7 @@ $ grep -E \^\[\[:blank:\]\]\*sudoers\[\[:blank:\]\]\*: /etc/nsswitch.conf
 $ dpkg-query -W -f=\$\{db:Status-Status\}\\n sudo
 installed
 $ dpkg-query -W -f=\$\{db:Status-Status\}\\n sudo-rs
-installed
+dpkg-query: no packages found matching sudo-rs
 $ sudo -V
 Sudo version 1.9.16p2
 $ visudo -c
@@ -97,8 +97,12 @@ $ grep -Pn \^\\h\*\(-\?auth\|@include\)\\h+ /etc/pam.d/su
 58:@include common-account
 59:@include common-session
 62:auth           required        pam_wheel.so use_uid group=sugroup
-Перед pam_wheel есть auth-строки или Include: проверьте порядок PAM-стека.
-Результат: REVIEW
+$ getent group sugroup
+sugroup:x:1001:
+$ getent passwd
+$ grep -E \^\[\^:\]+:\[\^:\]\*:\[0-9\]+:1001:
+pam_wheel включён, группа sugroup пуста.
+Результат: PASS
 
 [5.3.1.1] Актуальная версия libpam-runtime по локальному кэшу APT
 $ dpkg-query -W -f=\$\{db:Status-Status\}\\n libpam-runtime
@@ -189,7 +193,7 @@ active
 $ auditctl -s
 enabled 1
 failure 1
-pid 3588
+pid 3684
 rate_limit 0
 backlog_limit 8192
 lost 0
@@ -204,16 +208,20 @@ x86_64
 $ dpkg-query -W -f=\$\{Version\} libaudit1
 $ ausyscall --dump
 disk: -a always,exit -F arch=b64 -F path=/etc/sudoers -F perm=wa -k scope
+disk: -a always,exit -F arch=b32 -F path=/etc/sudoers -F perm=wa -k scope
 loaded: -a always,exit -F arch=b64 -S open,bind,truncate,ftruncate,rename,mkdir,rmdir,creat,link,unlink,symlink,chmod,fchmod,chown,fchown,lchown,mknod,acct,swapon,quotactl,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,openat,mkdirat,mknodat,fchownat,unlinkat,renameat,linkat,symlinkat,fchmodat,fallocate,renameat2,openat2 -F path=/etc/sudoers -F perm=wa -F key=scope
+loaded: -a always,exit -F arch=b32 -S open,creat,link,unlink,mknod,chmod,lchown,rename,mkdir,rmdir,acct,symlink,swapon,truncate,ftruncate,fchmod,fchown,quotactl,chown,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,openat,mkdirat,mknodat,fchownat,unlinkat,renameat,linkat,symlinkat,fchmodat,fallocate,renameat2,bind,openat2 -F path=/etc/sudoers -F perm=wa -F key=scope
 disk: -a always,exit -F arch=b64 -F dir=/etc/sudoers.d -F perm=wa -k scope
+disk: -a always,exit -F arch=b32 -F dir=/etc/sudoers.d -F perm=wa -k scope
 loaded: -a always,exit -F arch=b64 -S open,bind,truncate,ftruncate,rename,mkdir,rmdir,creat,link,unlink,symlink,chmod,fchmod,chown,fchown,lchown,mknod,acct,swapon,quotactl,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,openat,mkdirat,mknodat,fchownat,unlinkat,renameat,linkat,symlinkat,fchmodat,fallocate,renameat2,openat2 -F dir=/etc/sudoers.d -F perm=wa -F key=scope
+loaded: -a always,exit -F arch=b32 -S open,creat,link,unlink,mknod,chmod,lchown,rename,mkdir,rmdir,acct,symlink,swapon,truncate,ftruncate,fchmod,fchown,quotactl,chown,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,openat,mkdirat,mknodat,fchownat,unlinkat,renameat,linkat,symlinkat,fchmodat,fallocate,renameat2,bind,openat2 -F dir=/etc/sudoers.d -F perm=wa -F key=scope
 Результат: PASS
 
 [6.2.3.12] Аудит изменений /etc/group
 $ auditctl -s
 enabled 1
 failure 1
-pid 3588
+pid 3684
 rate_limit 0
 backlog_limit 8192
 lost 0
@@ -228,14 +236,16 @@ x86_64
 $ dpkg-query -W -f=\$\{Version\} libaudit1
 $ ausyscall --dump
 disk: -a always,exit -F arch=b64 -F path=/etc/group -F perm=wa -k identity
+disk: -a always,exit -F arch=b32 -F path=/etc/group -F perm=wa -k identity
 loaded: -a always,exit -F arch=b64 -S open,bind,truncate,ftruncate,rename,mkdir,rmdir,creat,link,unlink,symlink,chmod,fchmod,chown,fchown,lchown,mknod,acct,swapon,quotactl,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,openat,mkdirat,mknodat,fchownat,unlinkat,renameat,linkat,symlinkat,fchmodat,fallocate,renameat2,openat2 -F path=/etc/group -F perm=wa -F key=identity
+loaded: -a always,exit -F arch=b32 -S open,creat,link,unlink,mknod,chmod,lchown,rename,mkdir,rmdir,acct,symlink,swapon,truncate,ftruncate,fchmod,fchown,quotactl,chown,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,openat,mkdirat,mknodat,fchownat,unlinkat,renameat,linkat,symlinkat,fchmodat,fallocate,renameat2,bind,openat2 -F path=/etc/group -F perm=wa -F key=identity
 Результат: PASS
 
 [6.2.3.13] Аудит изменений /etc/passwd
 $ auditctl -s
 enabled 1
 failure 1
-pid 3588
+pid 3684
 rate_limit 0
 backlog_limit 8192
 lost 0
@@ -250,14 +260,16 @@ x86_64
 $ dpkg-query -W -f=\$\{Version\} libaudit1
 $ ausyscall --dump
 disk: -a always,exit -F arch=b64 -F path=/etc/passwd -F perm=wa -k identity
+disk: -a always,exit -F arch=b32 -F path=/etc/passwd -F perm=wa -k identity
 loaded: -a always,exit -F arch=b64 -S open,bind,truncate,ftruncate,rename,mkdir,rmdir,creat,link,unlink,symlink,chmod,fchmod,chown,fchown,lchown,mknod,acct,swapon,quotactl,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,openat,mkdirat,mknodat,fchownat,unlinkat,renameat,linkat,symlinkat,fchmodat,fallocate,renameat2,openat2 -F path=/etc/passwd -F perm=wa -F key=identity
+loaded: -a always,exit -F arch=b32 -S open,creat,link,unlink,mknod,chmod,lchown,rename,mkdir,rmdir,acct,symlink,swapon,truncate,ftruncate,fchmod,fchown,quotactl,chown,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,openat,mkdirat,mknodat,fchownat,unlinkat,renameat,linkat,symlinkat,fchmodat,fallocate,renameat2,bind,openat2 -F path=/etc/passwd -F perm=wa -F key=identity
 Результат: PASS
 
 [6.2.3.14] Аудит изменений /etc/shadow и /etc/gshadow
 $ auditctl -s
 enabled 1
 failure 1
-pid 3588
+pid 3684
 rate_limit 0
 backlog_limit 8192
 lost 0
@@ -272,9 +284,13 @@ x86_64
 $ dpkg-query -W -f=\$\{Version\} libaudit1
 $ ausyscall --dump
 disk: -a always,exit -F arch=b64 -F path=/etc/shadow -F perm=wa -k identity
+disk: -a always,exit -F arch=b32 -F path=/etc/shadow -F perm=wa -k identity
 loaded: -a always,exit -F arch=b64 -S open,bind,truncate,ftruncate,rename,mkdir,rmdir,creat,link,unlink,symlink,chmod,fchmod,chown,fchown,lchown,mknod,acct,swapon,quotactl,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,openat,mkdirat,mknodat,fchownat,unlinkat,renameat,linkat,symlinkat,fchmodat,fallocate,renameat2,openat2 -F path=/etc/shadow -F perm=wa -F key=identity
+loaded: -a always,exit -F arch=b32 -S open,creat,link,unlink,mknod,chmod,lchown,rename,mkdir,rmdir,acct,symlink,swapon,truncate,ftruncate,fchmod,fchown,quotactl,chown,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,openat,mkdirat,mknodat,fchownat,unlinkat,renameat,linkat,symlinkat,fchmodat,fallocate,renameat2,bind,openat2 -F path=/etc/shadow -F perm=wa -F key=identity
 disk: -a always,exit -F arch=b64 -F path=/etc/gshadow -F perm=wa -k identity
+disk: -a always,exit -F arch=b32 -F path=/etc/gshadow -F perm=wa -k identity
 loaded: -a always,exit -F arch=b64 -S open,bind,truncate,ftruncate,rename,mkdir,rmdir,creat,link,unlink,symlink,chmod,fchmod,chown,fchown,lchown,mknod,acct,swapon,quotactl,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,openat,mkdirat,mknodat,fchownat,unlinkat,renameat,linkat,symlinkat,fchmodat,fallocate,renameat2,openat2 -F path=/etc/gshadow -F perm=wa -F key=identity
+loaded: -a always,exit -F arch=b32 -S open,creat,link,unlink,mknod,chmod,lchown,rename,mkdir,rmdir,acct,symlink,swapon,truncate,ftruncate,fchmod,fchown,quotactl,chown,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,openat,mkdirat,mknodat,fchownat,unlinkat,renameat,linkat,symlinkat,fchmodat,fallocate,renameat2,bind,openat2 -F path=/etc/gshadow -F perm=wa -F key=identity
 Результат: PASS
 
-Итого: PASS=19 FAIL=0 REVIEW=1
+Итого: PASS=20 FAIL=0 REVIEW=0
