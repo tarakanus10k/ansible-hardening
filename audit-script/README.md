@@ -5,7 +5,7 @@
 stat -Lc 'File: "%n" Mode: "%#a" Owner: "%U" Group: "%G"' /etc/ssh/sshd_config
 
 # 5.1.2 Ensure access to /etc/ssh/sshd_config.d/ directory is configured
-find /etc/ssh/sshd_config.d/ -maxdepth 0 \( ! -user root -o ! -group root o -perm /077 \)
+find /etc/ssh/sshd_config.d/ -maxdepth 0 \( ! -user root -o ! -group root -o -perm /077 \)
 
 sshd -T 2>/dev/null | awk '$1 == "include" {print $2}'
 
