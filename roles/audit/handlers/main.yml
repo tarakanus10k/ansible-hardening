@@ -1,4 +1,0 @@
----
-- name: "Load auditd rules"
-  ansible.builtin.command: "augenrules --load"
-  changed_when: false

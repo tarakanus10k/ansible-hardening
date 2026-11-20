@@ -1,3 +1,0 @@
----
-- name: "Include auditd.yml"
-  ansible.builtin.import_tasks: "auditd.yml"
