@@ -74,28 +74,6 @@ ok: [debian-srv]
 TASK [sudo : 5.2.7 | Setting pam_wheel to use_uid] *****************************
 ok: [debian-srv]
 
-TASK [audit : 6.2.1.1 Ensure auditd packages are installed] ********************
-ok: [debian-srv]
-
-TASK [audit : 6.2.1.2 Ensure auditd service is enabled and active] *************
-ok: [debian-srv]
-
-TASK [audit : 6.2.3.1 Ensure modification of the /etc/sudoers file is collected] ***
-ok: [debian-srv]
-
-TASK [audit : 6.2.3.12 Ensure events that modify /etc/group information are collected] ***
-ok: [debian-srv]
-
-TASK [audit : 6.2.3.13 Ensure events that modify /etc/passwd information are collected] ***
-ok: [debian-srv]
-
-TASK [audit : 6.2.3.14 Ensure events that modify /etc/shadow and /etc/gshadow are collected] ***
-ok: [debian-srv]
-
-TASK [audit : Deploy auditd rules] *********************************************
-ok: [debian-srv] => (item=50-identity)
-ok: [debian-srv] => (item=50-scope)
-
 PLAY RECAP *********************************************************************
-debian-srv                 : ok=27   changed=0    unreachable=0    failed=0    skipped=4    rescued=0    ignored=0   
+debian-srv                 : ok=20   changed=0    unreachable=0    failed=0    skipped=4    rescued=0    ignored=0   
 
