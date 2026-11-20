@@ -1,7 +1,7 @@
 ---
-# 5.2.1 Ensure sudo is installed
-# 5.2.6 Ensure sudo timestamp_timeout is configured
-# 5.2.7 Ensure access to the su command is restricted
+# * 5.2.1 Ensure sudo is installed
+# 1) 5.2.6 Ensure sudo timestamp_timeout is configured
+# 2) 5.2.7 Ensure access to the su command is restricted
 
 # ---
 
