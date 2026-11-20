@@ -1,7 +1,7 @@
 # Аудит после харденинга
 ## SSH
 **Скриншот вводимых команд:**
-![['tests and audit/Снимок экрана 2026-11-20 200745.png']]
+![Скриншот команд SSH](screenshots/ssh-after.png)
 ### 5.1.1 Ensure access to /etc/ssh/sshd_config is configured
 **Команда:** `stat -Lc 'File: "%n" Mode: "%#a" Owner: "%U" Group: "%G"' /etc/ssh/sshd_config`
 **Ожидаемый вывод:** `File: "/etc/ssh/sshd_config" Mode: "0600"  Owner: "root" Group: "root"`
@@ -32,7 +32,7 @@
 
 ## PAM
 **Скриншот вводимых команд:**
-![['tests and audit/image_2026-11-20_23-56-14.png']]
+![Скриншот команд PAM](screenshots/pam-after.png)
 ### 5.3.1.1 Ensure latest version of pam is installed
 **Команда:** `dpkg-query -s libpam-runtime &>/dev/null && echo "libpam-runtime is installed"`
 **Ожидаемый вывод:** `libpam-runtime is installed`
@@ -71,7 +71,7 @@
 
 ## SUDO
 **Скриншот вводимых команд:**
-![['tests and audit/Снимок экрана 2026-11-20 201305.png']]
+![Скриншот команд SUDO](screenshots/sudo-after.png)
 ### 5.2.1 Ensure sudo is installed
 **Команда:** `dpkg-query -W -f='${db:Status-Status} ${Package}\n' sudo-rs sudo 2>/dev/null | awk '$1=="installed"{print $2}'`
 **Ожидаемый вывод:** `sudo | sudo-rs`
