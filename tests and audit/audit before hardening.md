@@ -1,7 +1,7 @@
 # Аудит до харденинга
 ## SSH
 **Скриншот вводимых команд:**
-![[Снимок экрана 2026-11-20 195234.png]]
+![['tests and audit/Снимок экрана 2026-11-20 195234.png']]
 ### 5.1.1 Ensure access to /etc/ssh/sshd_config is configured
 **Команда:** `stat -Lc 'File: "%n" Mode: "%#a" Owner: "%U" Group: "%G"' /etc/ssh/sshd_config`
 **Ожидаемый вывод:** `File: "/etc/ssh/sshd_config" Mode: "0600"  Owner: "root" Group: "root"`
@@ -32,7 +32,7 @@
 
 ## PAM
 **Скриншот вводимых команд:**
-![[image_2026-11-20_23-50-26.png]]
+![['tests and audit/image_2026-11-20_23-50-26.png']]
 ### 5.3.1.1 Ensure latest version of pam is installed
 **Команда:** `dpkg-query -s libpam-runtime &>/dev/null && echo "libpam-runtime is installed"`
 **Ожидаемый вывод:** `libpam-runtime is installed`
@@ -69,7 +69,7 @@ pam_faillock.so
 
 ## SUDO
 **Скриншот вводимых команд:**
-![[Снимок экрана 2026-11-20 195449.png]]
+![['tests and audit/Снимок экрана 2026-11-20 195449.png']]
 ### 5.2.1 Ensure sudo is installed
 **Команда:** `dpkg-query -W -f='${db:Status-Status} ${Package}\n' sudo-rs sudo 2>/dev/null | awk '$1=="installed"{print $2}'`
 **Ожидаемый вывод:** `sudo | sudo-rs`
