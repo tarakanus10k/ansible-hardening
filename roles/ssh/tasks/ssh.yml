@@ -1,9 +1,9 @@
 ---
-# 5.1.1-2 Ensure access to /etc/ssh/sshd_config is configured
-# 5.1.15 Ensure sshd LoginGraceTime is configured
-# 5.1.18 Ensure sshd MaxAuthTries is configured
-# 5.1.21 Ensure sshd PermitEmptyPasswords is disabled
-# 5.1.22 Ensure sshd PermitRootLogin is disabled
+# 1-2) 5.1.1-2 Ensure access to /etc/ssh/sshd_config is configured
+# 3) 5.1.15 Ensure sshd LoginGraceTime is configured
+# 4) 5.1.18 Ensure sshd MaxAuthTries is configured
+# 5) 5.1.21 Ensure sshd PermitEmptyPasswords is disabled
+# 6) 5.1.22 Ensure sshd PermitRootLogin is disabled
 
 # ---
 
