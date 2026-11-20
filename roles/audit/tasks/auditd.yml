@@ -1,10 +1,10 @@
 ---
-# 6.2.1.1 Ensure auditd packages are installed
-# 6.2.1.2 Ensure auditd service is enabled and active
-# 6.2.3.1 Ensure modification of the /etc/sudoers file is collected
-# 6.2.3.12 Ensure events that modify /etc/group information are collected
-# 6.2.3.13 Ensure events that modify /etc/passwd information are collected
-# 6.2.3.14 Ensure events that modify /etc/shadow and /etc/gshadow are collected
+# * 6.2.1.1 Ensure auditd packages are installed
+# * 6.2.1.2 Ensure auditd service is enabled and active
+# * 6.2.3.1 Ensure modification of the /etc/sudoers file is collected
+# * 6.2.3.12 Ensure events that modify /etc/group information are collected
+# * 6.2.3.13 Ensure events that modify /etc/passwd information are collected
+# * 6.2.3.14 Ensure events that modify /etc/shadow and /etc/gshadow are collected
 
 # ---
 
