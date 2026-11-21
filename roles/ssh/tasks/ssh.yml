@@ -63,7 +63,7 @@
   ansible.builtin.set_fact:
     update_sshd_template: true
 
-- name: "Deploy auditd rules"
+- name: "Deploy ssh rules"
   when: >-
     deb13cis_rule_5_1_15 or
     deb13cis_rule_5_1_18 or
