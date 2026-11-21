@@ -14,7 +14,7 @@ TASK [ssh : 5.1.2 | find /etc/ssh/sshd_config.d/*.conf] ************************
 ok: [debian-srv]
 
 TASK [ssh : 5.1.2 | /etc/ssh/sshd_config.d/*.conf] *****************************
-skipping: [debian-srv]
+ok: [debian-srv] => (item={'path': '/etc/ssh/sshd_config.d/10-ssh-hardening.conf', 'mode': '0600', 'isdir': False, 'ischr': False, 'isblk': False, 'isreg': True, 'isfifo': False, 'islnk': False, 'issock': False, 'uid': 0, 'gid': 0, 'size': 277, 'inode': 1569812, 'dev': 65024, 'nlink': 1, 'atime': 1795270559.5400963, 'mtime': 1795270533.7220106, 'ctime': 1795270534.3500602, 'gr_name': 'root', 'pw_name': 'root', 'wusr': True, 'rusr': True, 'xusr': False, 'wgrp': False, 'rgrp': False, 'xgrp': False, 'woth': False, 'roth': False, 'xoth': False, 'isuid': False, 'isgid': False, 'blocks': 8, 'disk_usage_bytes': 4096})
 
 TASK [ssh : 5.1.15 Ensure sshd LoginGraceTime is configured] *******************
 ok: [debian-srv]
@@ -26,6 +26,9 @@ TASK [ssh : 5.1.21 Ensure sshd PermitEmptyPasswords is disabled] ***************
 ok: [debian-srv]
 
 TASK [ssh : 5.1.22 Ensure sshd PermitRootLogin is disabled] ********************
+ok: [debian-srv]
+
+TASK [ssh : Deploy ssh rules] **************************************************
 ok: [debian-srv]
 
 TASK [pam : 5.3.1.1 Ensure latest version of pam is installed] *****************
@@ -75,5 +78,5 @@ TASK [sudo : 5.2.7 | Setting pam_wheel to use_uid] *****************************
 ok: [debian-srv]
 
 PLAY RECAP *********************************************************************
-debian-srv                 : ok=20   changed=0    unreachable=0    failed=0    skipped=4    rescued=0    ignored=0   
+debian-srv                 : ok=22   changed=0    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
 
