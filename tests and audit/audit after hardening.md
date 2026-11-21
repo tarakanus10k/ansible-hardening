@@ -29,9 +29,9 @@
 ### 5.1.18 Ensure sshd MaxAuthTries is configured
 **Команда:** `sshd -T | grep maxauthtries`
 
-**Ожидаемый вывод:** `maxauthtries 4`
+**Ожидаемый вывод:** `maxauthtries [1-4]`
 
-**Вывод:** `maxauthtries 4`
+**Вывод:** `maxauthtries 3`
 ### 5.1.21 Ensure sshd PermitEmptyPasswords is disabled
 **Команда:** `sshd -T | grep permitemptypasswords`
 
