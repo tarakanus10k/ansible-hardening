@@ -3,7 +3,6 @@
 # 2) 5.1.2 Ensure access to /etc/ssh/sshd_config.d/ directory is configured
 # 3) 5.1.15 Ensure sshd LoginGraceTime is configured
 # 4) 5.1.18 Ensure sshd MaxAuthTries is configured
-# 5) 5.1.21 Ensure sshd PermitEmptyPasswords is disabled
 # 6) 5.1.22 Ensure sshd PermitRootLogin is disabled
 
 # ---
@@ -54,12 +53,6 @@
   ansible.builtin.set_fact:
     update_sshd_template: true
 
-# 5.1.21 Ensure sshd PermitEmptyPasswords is disabled
-- name: "5.1.21 Ensure sshd PermitEmptyPasswords is disabled"
-  when: deb13cis_rule_5_1_21
-  ansible.builtin.set_fact:
-    update_sshd_template: true
-
 # 5.1.22 Ensure sshd PermitRootLogin is disabled
 - name: "5.1.22 Ensure sshd PermitRootLogin is disabled"
   when: deb13cis_rule_5_1_22
@@ -70,7 +63,6 @@
   when: >-
     deb13cis_rule_5_1_15 or
     deb13cis_rule_5_1_18 or
-    deb13cis_rule_5_1_21 or
     deb13cis_rule_5_1_22
   notify: Restart sshd
   ansible.builtin.template:

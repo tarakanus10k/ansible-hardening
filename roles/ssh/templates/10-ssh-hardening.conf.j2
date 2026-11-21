@@ -6,10 +6,6 @@ LoginGraceTime 60
 # 5.1.18 Ensure sshd MaxAuthTries is configured
 MaxAuthTries 3
 {% endif %}
-{% if deb13cis_rule_5_1_21 | bool %}
-# 5.1.21 Ensure sshd PermitEmptyPasswords is disabled
-PermitEmptyPasswords no
-{% endif %}
 {% if deb13cis_rule_5_1_22 | bool %}
 # 5.1.22 Ensure sshd PermitRootLogin is disabled
 PermitRootLogin no
