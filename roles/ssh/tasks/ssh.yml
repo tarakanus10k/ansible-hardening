@@ -72,7 +72,7 @@
   notify: Restart sshd
   ansible.builtin.template:
     src: "10-ssh-hardening.conf.j2"
-    dest: "/etc/audit/rules.d/10-ssh-hardening.conf"
+    dest: "/etc/ssh/sshd_config.d/10-ssh-hardening.conf"
     owner: root
     group: root
     mode: 0600
