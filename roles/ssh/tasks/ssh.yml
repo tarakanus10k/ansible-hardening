@@ -1,5 +1,6 @@
 ---
-# 1-2) 5.1.1-2 Ensure access to /etc/ssh/sshd_config is configured
+# 1) 5.1.1 Ensure access to /etc/ssh/sshd_config is configured
+# 2) 5.1.2 Ensure access to /etc/ssh/sshd_config.d/ directory is configured
 # 3) 5.1.15 Ensure sshd LoginGraceTime is configured
 # 4) 5.1.18 Ensure sshd MaxAuthTries is configured
 # 5) 5.1.21 Ensure sshd PermitEmptyPasswords is disabled
@@ -7,17 +8,19 @@
 
 # ---
 
-# 5.1.1-2 Ensure access to /etc/ssh/sshd_config is configured
+# 5.1.1 Ensure access to /etc/ssh/sshd_config is configured
 - name: "5.1.1 Ensure access to /etc/ssh/sshd_config is configured"
-  when: deb13cis_rule_5_1_1_2
-  block:
-    - name: "5.1.1 | /etc/ssh/sshd_config"
-      ansible.builtin.file:
-        path: "/etc/ssh/sshd_config"
-        owner: root
-        group: root
-        mode: 0600
+  when: deb13cis_rule_5_1_1
+  ansible.builtin.file:
+    path: "/etc/ssh/sshd_config"
+    owner: root
+    group: root
+    mode: 0600
 
+# 5.1.2 Ensure access to /etc/ssh/sshd_config.d/ directory is configured
+- name: "5.1.2 Ensure access to /etc/ssh/sshd_config.d/ directory is configured"
+  when: deb13cis_rule_5_1_2
+  block:
     - name: "5.1.2 | /etc/ssh/sshd_config.d/"
       ansible.builtin.file:
         path: "/etc/ssh/sshd_config.d/"

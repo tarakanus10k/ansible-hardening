@@ -1,17 +1,8 @@
 ---
-# * 5.2.1 Ensure sudo is installed
 # 1) 5.2.6 Ensure sudo timestamp_timeout is configured
 # 2) 5.2.7 Ensure access to the su command is restricted
 
 # ---
-
-# 5.2.1 Ensure sudo is installed
-- name: "5.2.1 Ensure sudo is installed"
-  when: deb13cis_rule_5_2_1
-  ansible.builtin.package:
-    name:
-      - sudo
-    state: present
 
 # 5.2.6 Ensure sudo timestamp_timeout is configured
 - name: "5.2.6 Ensure sudo timestamp_timeout is configured"
