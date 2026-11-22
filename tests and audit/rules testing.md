@@ -10,7 +10,7 @@
 ### 5.3.3.1.1 Ensure password failed attempts lockout is configured + 5.3.3.1.2 Ensure password unlock time is configured
 ![Попытка входа от другого пользователя, вводя неверный пароль](screenshots/pam_faillock01.png)
 
-![Список заблокированных пользователей](screenshots/pam_faillock02.png)
+![Список заблокированных пользователей](screenshots/pam_faillock2.png)
 
 ## SSH
 ### 5.1.18 Ensure sshd MaxAuthTries is configured
