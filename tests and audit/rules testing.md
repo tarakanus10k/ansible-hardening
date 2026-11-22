@@ -3,6 +3,7 @@
 ### 5.2.7 Ensure access to the su command is restricted
 ![Попытка использования su для переключения на другого пользователя](screenshots/su_command.png)
 
+### 5.2.6 Ensure sudo timestamp_timeout is configured
 ![Проверка на время использования sudo, без ввода пароля](screenshots/timestamp_timeout.png)
 
 ## PAM
@@ -12,5 +13,5 @@
 ![Список заблокированных пользователей](screenshots/pam_faillock02.png)
 
 ## SSH
-
+### 5.1.18 Ensure sshd MaxAuthTries is configured
 ![Попытка входа через ssh, вводя неверный пароль](screenshots/ssh_connection.png)
