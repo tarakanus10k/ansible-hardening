@@ -1,7 +1,5 @@
 # Харденинг OS Linux с помощью ansible
 
-### Подготовка стендов
-
 #### 1. Машина №1 (wsl: debian13)
 ssh:
 ```bash
@@ -26,32 +24,28 @@ pipx install --include-deps ansible
 sudo apt install git # установка git
 git clone https://github.com/tarakanus10k/ansible-hardening.git
 ansible-vault create .ansible-hardening/inventory/host_vars/debian-srv/vault.yml
-
-# импорт плейбука (аудит)
-https://github.com/ansible-lockdown/DEBIAN13-CIS.git
 ```
 
 #### 2. Машина №2 (vmware: debian13)
 пользователи:
-- root: пароль отсутствует
-- srvadmin: пользователь, созданный при установке системы
+- root
+- srvadmin
 
 #### 3. Тесты
 ```bash
 # перед запуском
 eval $(ssh-agent) && ssh-add ~/.ssh/ed25519_ansible_key
 
-# АУДИТ (до)
-scp -i ~/.ssh/ed25519_ansible_key ./audit-script/audit.sh srvadmin@192.168.100.10:~/
-chmod +x ~/audit.sh
-sudo bash ./audit.sh before-hardening.sh
-
 # Запуск плейбука (харденинг)
-ansible-playbook playbooks/site.yml --diff --ask-vault-pass | tee ~/ansible-hardening/tests/ansible-run01.log
-
-# АУДИТ (после)
-sudo bash ./audit.sh after-hardening.sh
+ansible-playbook playbooks/site.yml --diff --ask-vault-pass | tee "tests and audit/playbookrun01.log"
   
 # Запуск плейбука (проверка на идемпотентность)
-ansible-playbook playbooks/site.yml --diff --ask-vault-pass | tee ~/ansible-hardening/tests/ansible-run02.log
+ansible-playbook playbooks/site.yml --diff --ask-vault-pass | tee "tests and audit/playbookrun02.log"
 ```
+
+### 4. Результаты
+- [Аудит до харденинга](tests%20and%20audit/audit%20before%20hardening.md)
+- [Аудит после харденинга](tests%20and%20audit/audit%20after%20hardening.md)
+
+- [Первый запуск плейбука](tests%20and%20audit/playbookrun01.log)
+- [Второй запуск плейбука](tests%20and%20audit/playbookrun02.log)
