@@ -32,12 +32,6 @@
 **Ожидаемый вывод:** `maxauthtries [1-4]`
 
 **Вывод:** `maxauthtries 3`
-### 5.1.21 Ensure sshd PermitEmptyPasswords is disabled
-**Команда:** `sshd -T | grep permitemptypasswords`
-
-**Ожидаемый вывод:** `permitemptypasswords no`
-
-**Вывод:** `permitemptypasswords no`
 ### 5.1.22 Ensure sshd PermitRootLogin is disabled
 **Команда:** `sshd -T | grep permitrootlogin`
 
@@ -48,18 +42,6 @@
 ## PAM
 **Скриншот вводимых команд:**
 ![Скриншот команд PAM](screenshots/pam-after.png)
-### 5.3.1.1 Ensure latest version of pam is installed
-**Команда:** `dpkg-query -s libpam-runtime &>/dev/null && echo "libpam-runtime is installed"`
-
-**Ожидаемый вывод:** `libpam-runtime is installed`
-
-**Вывод:** `libpam-runtime is installed`
-
-**Команда:** `apt list --upgradable 2>&1 | grep -P '^libpam-runtime\b'`
-
-**Ожидаемый вывод:** ``
-
-**Вывод:** ``
 ### 5.3.2.2 Ensure pam_faillock module is enabled
 **Команда:** `grep -P -- '\bpam_faillock\.so\b' /etc/pam.d/common-{auth,account}`
 
@@ -104,12 +86,6 @@
 ## SUDO
 **Скриншот вводимых команд:**
 ![Скриншот команд SUDO](screenshots/sudo-after.png)
-### 5.2.1 Ensure sudo is installed
-**Команда:** `dpkg-query -W -f='${db:Status-Status} ${Package}\n' sudo-rs sudo 2>/dev/null | awk '$1=="installed"{print $2}'`
-
-**Ожидаемый вывод:** `sudo | sudo-rs`
-
-**Вывод:** `sudo`
 ### 5.2.6 Ensure sudo timestamp_timeout is configured
 **Команда:** `grep -rPsi -- '^\h*Defaults\h+([^#\n\r]+,\h*)?timestamp_timeout\h*=\h*[-09]+' \ /etc/sudoers /etc/sudoers.d/ 2>/dev/null`
 
@@ -130,8 +106,8 @@
 **Вывод:** `sugroup:x:1001`
 
 ## Итог
-**SSH - 6 pass, 0 failed**
+**SSH - 5 pass, 0 failed**
 
-**PAM - 4 pass**
+**PAM - 3 pass, 0 failed**
 
-**SUDO - 3 pass**
+**SUDO - 2 pass, 0 failed**

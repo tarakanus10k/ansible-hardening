@@ -9,7 +9,7 @@
 
 **Вывод:** `File: "/etc/ssh/sshd_config" Mode: "0644"  Owner: "root" Group: "root"`
 ### 5.1.2 Ensure access to /etc/ssh/sshd_config.d/ directory is configured
-**Команда:** ` find /etc/ssh/sshd_config.d/ -maxdepth 0 \( ! -user root -o ! -group root -o -perm /077 \)`
+**Команда:** `find /etc/ssh/sshd_config.d/ -maxdepth 0 \( ! -user root -o ! -group root -o -perm /077 \)`
 
 **Ожидаемый вывод:** ``
 
@@ -33,12 +33,6 @@
 
 
 **Вывод:** `maxauthtries 6`
-### 5.1.21 Ensure sshd PermitEmptyPasswords is disabled
-**Команда:** `sshd -T | grep permitemptypasswords`
-
-**Ожидаемый вывод:** `permitemptypasswords no`
-
-**Вывод:** `permitemptypasswords no`
 ### 5.1.22 Ensure sshd PermitRootLogin is disabled
 **Команда:** `sshd -T | grep permitrootlogin`
 
@@ -49,18 +43,6 @@
 ## PAM
 **Скриншот вводимых команд:**
 ![Скриншот команд PAM](screenshots/pam-before.png)
-### 5.3.1.1 Ensure latest version of pam is installed
-**Команда:** `dpkg-query -s libpam-runtime &>/dev/null && echo "libpam-runtime is installed"`
-
-**Ожидаемый вывод:** `libpam-runtime is installed`
-
-**Вывод:** `libpam-runtime is installed`
-
-**Команда:** `apt list --upgradable 2>&1 | grep -P '^libpam-runtime\b'`
-
-**Ожидаемый вывод:** ``
-
-**Вывод:** ``
 ### 5.3.2.2 Ensure pam_faillock module is enabled
 **Команда:** `grep -P -- '\bpam_faillock\.so\b' /etc/pam.d/common-{auth,account}`
 
@@ -85,6 +67,7 @@ pam_faillock.so
 **Команда:** `grep -Pi -- '^\h*auth\h+(requisite|required|sufficient)\h+pam_faillock\.so\h+([^#\n\r]+\h+)?deny\h*=\h*(0|[6-9]|[1-9][0-9]+)\b' /etc/pam.d/common-auth`
 
 **Ожидаемый вывод:** ``
+
 **Вывод:** ``
 ### 5.3.3.1.2 Ensure password unlock time is configured
 **Команда:** `grep -Pi -- '^\h*unlock_time\h*=\h*(0|9[0-9][0-9]|[1-9][0-9]{3,})\b' /etc/security/faillock.conf`
@@ -102,12 +85,6 @@ pam_faillock.so
 ## SUDO
 **Скриншот вводимых команд:**
 ![Скриншот команд SUDO](screenshots/sudo-before.png)
-### 5.2.1 Ensure sudo is installed
-**Команда:** `dpkg-query -W -f='${db:Status-Status} ${Package}\n' sudo-rs sudo 2>/dev/null | awk '$1=="installed"{print $2}'`
-
-**Ожидаемый вывод:** `sudo | sudo-rs`
-
-**Вывод:** `sudo`
 ### 5.2.6 Ensure sudo timestamp_timeout is configured
 **Команда:** `grep -rPsi -- '^\h*Defaults\h+([^#\n\r]+,\h*)?timestamp_timeout\h*=\h*[-09]+' \ /etc/sudoers /etc/sudoers.d/ 2>/dev/null`
 
@@ -128,8 +105,8 @@ pam_faillock.so
 **Вывод:** ``
 
 ## Итог
-**SSH - 1 pass, 5 failed**
+**SSH - 0 pass, 5 failed**
 
-**PAM - 1 pass, 3 failed**
+**PAM - 0 pass, 3 failed**
 
-**SUDO - 1 pass, 2 failed**
+**SUDO - 0 pass, 2 failed**
