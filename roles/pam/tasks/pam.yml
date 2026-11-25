@@ -47,7 +47,7 @@
       ansible.builtin.lineinfile:
         path: /etc/security/faillock.conf
         regexp: '^[ \t]*#?[ \t]*deny[ \t]*='
-        line: "deny = 3"
+        line: "deny = {{ pam_faillock_deny }}"
         owner: root
         group: root
         mode: 0600
@@ -78,7 +78,7 @@
       ansible.builtin.lineinfile:
         path: /etc/security/faillock.conf
         regexp: '^[ \t]*#?[ \t]*unlock_time[ \t]*='
-        line: "unlock_time = 900"
+        line: "unlock_time = {{ pam_faillock_unlock_time }}"
         owner: root
         group: root
         mode: 0600
