@@ -4,3 +4,7 @@ deb13cis_rule_5_1_2: true
 deb13cis_rule_5_1_15: true
 deb13cis_rule_5_1_18: true
 deb13cis_rule_5_1_22: true
+
+ssh_logingracetime: 60
+ssh_maxauthtries: 3
+ssh_permitrootlogin: "no"

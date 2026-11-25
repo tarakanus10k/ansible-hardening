@@ -1,12 +1,12 @@
 {% if deb13cis_rule_5_1_15 | bool %}
 # 5.1.15 Ensure sshd LoginGraceTime is configured
-LoginGraceTime 60
+LoginGraceTime {{ ssh_logingracetime }}
 {% endif %}
 {% if deb13cis_rule_5_1_18 | bool %}
 # 5.1.18 Ensure sshd MaxAuthTries is configured
-MaxAuthTries 3
+MaxAuthTries {{ ssh_maxauthtries }}
 {% endif %}
 {% if deb13cis_rule_5_1_22 | bool %}
 # 5.1.22 Ensure sshd PermitRootLogin is disabled
-PermitRootLogin no
+PermitRootLogin {{ ssh_permitrootlogin }}
 {% endif %}
