@@ -6,12 +6,13 @@
     - `hosts.yml`
     - `host_vars/debian-srv/`
       - `vars.yml`
+      - `vault.yml`
   - `playbooks/`
     - `site.yml`
   - `roles/`
-    - [`ssh/`](roles/ssh/README.md)
-    - [`pam/`](roles/pam/README.md)
-    - [`sudo/`](roles/sudo/README.md)
+    - [`ssh/`](roles/ssh/)
+    - [`pam/`](roles/pam/)
+    - [`sudo/`](roles/sudo/)
   - `tests and audit/`
     - [`Аудит до харденинга`](tests%20and%20audit/audit%20before%20hardening.md)
     - [`Аудит после харденинга`](tests%20and%20audit/audit%20after%20hardening.md)
